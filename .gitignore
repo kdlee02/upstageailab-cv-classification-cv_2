@@ -4,5 +4,5 @@
 ./LSM/logs
 ./LSM/experiments
 ./LSM/.env
-./LSM/temp_train.csv
-./LSM/temp_test.csv
+LSM/temp_train.csv
+LSM/temp_val.csv
