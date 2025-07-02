@@ -31,8 +31,8 @@ class AugmentedDataset(Dataset):
     def __getitem__(self, idx):
         # 이미지 파일명 가져오기
         img_name = self.data.iloc[idx, 0]
-        img_path = os.path.join(self.data.iloc[idx, -1], img_name)
-        # img_path = os.path.join(self.img_dir, img_name)
+        # img_path = os.path.join(self.data.iloc[idx, -1], img_name)
+        img_path = os.path.join(self.img_dir, img_name)
         
         # 이미지 로드
         image = Image.open(img_path).convert('RGB')

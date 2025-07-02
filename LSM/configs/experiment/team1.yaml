@@ -1,6 +1,6 @@
-name: "team1_experiment"
-description: "팀원1 실험 - EfficientNet + AdamW + 증강 데이터"
-tags: ["team1", "efficientnet", "adamw"]
+name: "lsm_efficientnet_b3_size_512_batch_32_augmented++"
+description: "팀원1 실험 - EfficientNet-b1 + AdamW + 증강 데이터"
+tags: ["team1", "efficientnet-b1", "adamw"]
 model: efficientnet
 optimizer: adamw
 dataset: augmented

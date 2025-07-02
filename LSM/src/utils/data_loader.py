@@ -35,24 +35,6 @@ def create_data_loaders(config):
     
     # 전체 데이터 로드
     full_data = pd.read_csv(dataset_config['train_csv'])
-    full_data['path'] = './data/train/'
-    if dataset_name == 'augmented':
-        os.makedirs(f'./data/augmented/', exist_ok=True)
-        traget_count = full_data['target'].value_counts().reset_index(name='count')
-        traget_count['augmented_count'] = traget_count['count'].apply(lambda x : 150 - x)
-        sample_list = [full_data]
-        for target, augmented_count in traget_count[['target','augmented_count']].values:
-            target_full_data = full_data[full_data['target'] == target]
-            sample = pd.concat([target_full_data.sample(n=1) for _ in range(augmented_count)])
-            for path,file in sample[['path','ID']].values:
-                image = Image.open(path+file).convert('RGB')
-                image = transform(image)
-                img_pil = Image.fromarray(image.permute(1, 2, 0).cpu().numpy())
-                img_pil.save('./data/augmented/' + file)
-            sample['path'] = './data/augmented/'
-            sample_list.append(sample)
-        full_data = pd.concat(sample_list)
-        full_data = full_data.sample(frac=1).reset_index(drop=True)
     # train/val 분할
     # train_data, val_data = train_test_split(
     #     full_data, 
@@ -60,14 +42,24 @@ def create_data_loaders(config):
     #     random_state=config.get('seed', 42),
     #     stratify=full_data.iloc[:, 1] if len(full_data.columns) > 1 else None
     # )
-    train_data, val_data = train_test_split(
-        full_data,
-        test_size=0.5,  # 5:5 비율로 설정
-        random_state=config.get('seed', 42),
-        # 열의 위치 대신 '이름'을 사용하여 stratify 지정 (더 안정적인 방법)
-        stratify=full_data['target'] if 'target' in full_data.columns else None
-    )
+
+    if dataset_name == 'augmented':
+        train_data = pd.read_csv('./data/train_augmented.csv')
+        train_data['path'] = './data/train_augmented/'
+        val_data = pd.read_csv('./data/val_augmented.csv')
+        val_data['path'] = './data/val_augmented/'
+    else:
+        train_data, val_data = train_test_split(
+            full_data,
+            test_size=0.2,  # 5:5 비율로 설정
+            random_state=config.get('seed', 42),
+            # 열의 위치 대신 '이름'을 사용하여 stratify 지정 (더 안정적인 방법)
+            stratify=full_data['target'] if 'target' in full_data.columns else None
+        )
     
+    
+ 
+
     
     # 임시 CSV 파일 생성
     train_csv = 'temp_train.csv'
@@ -84,7 +76,7 @@ def create_data_loaders(config):
         )
         val_dataset = BasicDataset(
             csv_file=val_csv,
-            img_dir=dataset_config['train_img_dir'],
+            img_dir=dataset_config['val_img_dir'],
             transform=transform
         )
     elif dataset_name == 'augmented':
@@ -95,7 +87,7 @@ def create_data_loaders(config):
         )
         val_dataset = AugmentedDataset(
             csv_file=val_csv,
-            img_dir=dataset_config['train_img_dir'],
+            img_dir=dataset_config['val_img_dir'],
             transform=transform
         )
     else:

@@ -9,6 +9,34 @@ defaults:
 seed: 42
 num_classes: 17
 
+# 새로운 parameters 섹션 추가
+parameters:
+  # 모델 관련 parameters
+  model_parameters:
+    embedding_dim: 512
+    hidden_dim: 256
+    num_layers: 4
+    attention_heads: 8
+    
+  # 학습 관련 parameters
+  training_parameters:
+    gradient_accumulation_steps: 1
+    warmup_ratio: 0.1
+    max_grad_norm: 1.0
+    scheduler_type: "cosine"
+    
+  # 데이터 관련 parameters
+  data_parameters:
+    max_length: 512
+    truncation: true
+    padding: "max_length"
+    
+  # 평가 관련 parameters
+  evaluation_parameters:
+    eval_steps: 500
+    save_steps: 1000
+    logging_steps: 100
+
 # 저장 설정
 save:
   model_dir: "experiments"
@@ -26,21 +54,25 @@ model:
   name: "efficientnet"
   model_name: "efficientnet-b1"
   pretrained: true
-  dropout_rate: 0.5
+  dropout_rate: 0.2
   num_classes: 17
 
 # 데이터셋 설정
 dataset:
   name: "augmented"
-  train_csv: "data/train.csv"
-  train_img_dir: "data/train"
-  val_csv: "data/train.csv"  # 실제로는 별도의 검증 CSV가 필요
-  val_img_dir: "data/train"
+  # train_csv: "data/train.csv"
+  # train_img_dir: "data/train"
+  # val_csv: "data/train.csv"
+  # val_img_dir: "data/train"
+  train_csv: "data/train_augmented.csv"
+  train_img_dir: "data/train_augmented"
+  val_csv: "data/val_augmented.csv"
+  val_img_dir: "data/val_augmented"
 
 # 변환 설정
 transform:
   name: "augmented"
-  image_size: 224
+  image_size: 512
 
 # 옵티마이저 설정
 optimizer:

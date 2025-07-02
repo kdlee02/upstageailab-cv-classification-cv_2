@@ -95,11 +95,18 @@ def main(cfg: DictConfig):
     # wandb 설정 가져오기
     wandb_config = get_wandb_config()
     
+    # wandb 파라미터가 설정되어 있는지 확인
+    wandb_params = getattr(cfg, 'wandb', {})
+    
     # 로거 설정
     logger = WandbLogger(
-        project=cfg.logging.project_name,
+        project=wandb_params.get('project', cfg.logging.project_name),
         name=cfg.experiment.name,
         tags=cfg.experiment.tags,
+        entity=wandb_params.get('entity', None),
+        group=wandb_params.get('group', None),
+        job_type=wandb_params.get('job_type', 'training'),
+        notes=wandb_params.get('notes', ''),
         config=OmegaConf.to_container(cfg, resolve=True)
     )
     
