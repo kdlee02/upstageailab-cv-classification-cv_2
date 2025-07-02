@@ -2,6 +2,7 @@
 defaults:
   - _self_
   - experiment: default
+  - scheduler: cosine
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
 
@@ -44,17 +45,17 @@ save:
 
 # 학습 설정
 training:
-  batch_size: 32
+  batch_size: 16
   max_epochs: 50
   num_workers: 4
   patience: 10
 
 # 모델 설정
 model:
-  name: "efficientnet"
-  model_name: "efficientnet-b1"
+  name: "resnet50"
+  # model_name: "efficientnet-b3"
   pretrained: true
-  dropout_rate: 0.2
+  dropout_rate: 0.5
   num_classes: 17
 
 # 데이터셋 설정
@@ -72,7 +73,7 @@ dataset:
 # 변환 설정
 transform:
   name: "augmented"
-  image_size: 512
+  image_size: 256
 
 # 옵티마이저 설정
 optimizer:
@@ -80,9 +81,19 @@ optimizer:
   lr: 0.001
   weight_decay: 0.0001
 
+# 스캐줄러 설정
+scheduler:
+  name: "cosine_warm_restart"
+  # 스캐줄러별 설정은 각 스캐줄러 yaml 파일에서 관리
+  # 또는 여기서 직접 파라미터 설정 가능
+  params:
+    T_0: 10
+    T_mult: 2
+    eta_min: 0.000001
+
 # 손실 함수 설정
 loss:
-  name: "focal"
+  name: "cross_entropy"
   label_smoothing: 0.0
 
 # 로깅 설정

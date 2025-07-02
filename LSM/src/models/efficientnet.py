@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-
+import timm
 
 class EfficientNetModel(nn.Module):
     """EfficientNet 기반 문서 분류 모델"""
@@ -11,26 +11,26 @@ class EfficientNetModel(nn.Module):
         
         # EfficientNet 백본
         if model_name == "efficientnet-b0":
-            self.backbone = models.efficientnet_b0(pretrained=True)
+            self.backbone = timm.create_model('efficientnet_b0', pretrained=True, num_classes=num_classes)
         elif model_name == "efficientnet-b1":
-            self.backbone = models.efficientnet_b1(pretrained=True)
+            self.backbone = timm.create_model('efficientnet_b1', pretrained=True, num_classes=num_classes)
         elif model_name == "efficientnet-b2":
-            self.backbone = models.efficientnet_b2(pretrained=True)
+            self.backbone = timm.create_model('efficientnet_b2', pretrained=True, num_classes=num_classes)
         elif model_name == "efficientnet-b3":
-            self.backbone = models.efficientnet_b3(pretrained=True)
+            self.backbone = timm.create_model('efficientnet_b3', pretrained=True, num_classes=num_classes)
         elif model_name == "efficientnet-b4":
-            self.backbone = models.efficientnet_b4(pretrained=True)
+            self.backbone = timm.create_model('efficientnet_b4', pretrained=True, num_classes=num_classes)
         else:
             raise ValueError(f"지원하지 않는 EfficientNet 모델: {model_name}")
         
-        # 마지막 분류 층을 제거
-        in_features = self.backbone.classifier[1].in_features
+        # # 마지막 분류 층을 제거
+        # in_features = self.backbone.classifier[1].in_features
         
-        # 새로운 분류 헤드
-        self.backbone.classifier = nn.Sequential(
-            nn.Dropout(dropout_rate),
-            nn.Linear(in_features, num_classes)
-        )
+        # # 새로운 분류 헤드
+        # self.backbone.classifier = nn.Sequential(
+        #     # nn.Dropout(dropout_rate),
+        #     nn.Linear(in_features, num_classes)
+        # )
     
     def forward(self, x):
         return self.backbone(x) 

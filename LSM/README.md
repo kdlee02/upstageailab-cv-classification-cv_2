@@ -7,6 +7,7 @@
 - 다양한 모델 지원 (ResNet50, EfficientNet, Vision Transformer)
 - 다양한 손실 함수 (Cross Entropy, Focal Loss)
 - 다양한 옵티마이저 (Adam, AdamW, SGD)
+- **다양한 스캐줄러 지원 (Cosine, Step, Exponential, Plateau, Warmup Cosine, Warmup Linear, Cosine Warm Restart)**
 - 데이터 증강 기법
 - **앙상블 기법 지원**
 - 실험 관리 및 로깅 (Weights & Biases)
@@ -98,6 +99,91 @@ python run_ensemble_experiment.py
 python example_env_usage.py
 ```
 
+### 스캐줄러 사용 예제
+
+```bash
+python example_scheduler_usage.py
+```
+
+### 스캐줄러 설정
+
+다양한 스캐줄러를 사용할 수 있습니다. `configs/config.yaml`에서 기본 스캐줄러를 설정하거나, 명령줄에서 지정할 수 있습니다:
+
+#### 기본 설정에서 스캐줄러 변경
+```yaml
+# configs/config.yaml
+scheduler:
+  name: "cosine"  # cosine, step, exponential, plateau, warmup_cosine, warmup_linear, cosine_warm_restart
+```
+
+#### 스캐줄러 파라미터 직접 설정
+```yaml
+# configs/config.yaml
+scheduler:
+  name: "cosine_warm_restart"
+  params:
+    T_0: 10
+    T_mult: 2
+    eta_min: 0.000001
+```
+
+#### 명령줄에서 스캐줄러 지정
+```bash
+# Cosine 스캐줄러 사용
+python run_experiment.py scheduler=cosine
+
+# Step 스캐줄러 사용
+python run_experiment.py scheduler=step
+
+# Warmup Cosine 스캐줄러 사용
+python run_experiment.py scheduler=warmup_cosine
+
+# Cosine Warm Restart 스캐줄러 사용
+python run_experiment.py scheduler=cosine_warm_restart
+```
+
+#### 스캐줄러별 설정 예시
+
+**Cosine 스캐줄러** (`configs/scheduler/cosine.yaml`):
+```yaml
+_target_: src.schedulers.cosine.CosineScheduler
+T_max: 100
+eta_min: 0.0
+```
+
+**Step 스캐줄러** (`configs/scheduler/step.yaml`):
+```yaml
+_target_: src.schedulers.step.StepScheduler
+step_size: 30
+gamma: 0.1
+```
+
+**Warmup Cosine 스캐줄러** (`configs/scheduler/warmup_cosine.yaml`):
+```yaml
+_target_: src.schedulers.warmup_cosine.WarmupCosineScheduler
+warmup_steps: 1000
+max_steps: 10000
+min_lr: 0.0
+warmup_start_lr: 0.0
+```
+
+**Plateau 스캐줄러** (`configs/scheduler/plateau.yaml`):
+```yaml
+_target_: src.schedulers.plateau.PlateauScheduler
+mode: min
+factor: 0.1
+patience: 10
+verbose: false
+```
+
+**Cosine Warm Restart 스캐줄러** (`configs/scheduler/cosine_warm_restart.yaml`):
+```yaml
+_target_: src.schedulers.cosine_warm_restart.CosineWarmRestartScheduler
+T_0: 10
+T_mult: 2
+eta_min: 0.000001
+```
+
 ### 앙상블 설정 예시
 
 `configs/ensemble.yaml` 파일에서 앙상블 설정을 조정할 수 있습니다:
@@ -175,9 +261,12 @@ base_code2/
 │   ├── ensemble.yaml       # 앙상블 설정
 │   ├── model/              # 모델 설정
 │   ├── optimizer/          # 옵티마이저 설정
+│   ├── scheduler/          # 스캐줄러 설정
 │   └── ...
 ├── src/
 │   ├── models/             # 모델 구현
+│   ├── optimizers/         # 옵티마이저 구현
+│   ├── schedulers/         # 스캐줄러 구현
 │   ├── utils/
 │   │   ├── ensemble.py     # 앙상블 구현
 │   │   ├── env_utils.py    # 환경 변수 유틸리티

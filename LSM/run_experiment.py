@@ -76,14 +76,16 @@ def main(cfg: DictConfig):
     experiment_dir.mkdir(parents=True, exist_ok=True)
     
     # 콜백 설정
+    checkpoint_callback = ModelCheckpoint(
+        monitor='val_f1',
+        dirpath=experiment_dir,
+        filename='best-{epoch:02d}-{val_f1:.4f}',
+        save_top_k=cfg.logging.save_top_k,
+        mode='max'
+    )
+    
     callbacks = [
-        ModelCheckpoint(
-            monitor='val_f1',
-            dirpath=experiment_dir,
-            filename='best-{epoch:02d}-{val_f1:.4f}',
-            save_top_k=cfg.logging.save_top_k,
-            mode='max'
-        ),
+        checkpoint_callback,
         EarlyStopping(
             monitor='val_f1',
             patience=cfg.training.patience,
@@ -114,7 +116,7 @@ def main(cfg: DictConfig):
     trainer = pl.Trainer(
         max_epochs=cfg.training.max_epochs,
         accelerator='auto',
-        devices=1 if torch.cuda.is_available() else None,
+        devices=1 if torch.cuda.is_available() else 'auto',
         callbacks=callbacks,
         logger=logger,
         log_every_n_steps=cfg.logging.log_every_n_steps
@@ -122,6 +124,19 @@ def main(cfg: DictConfig):
     
     # 학습 시작
     trainer.fit(model, train_loader, val_loader)
+    
+    # 베스트 모델 로드
+    print("베스트 모델 로드 중...")
+    if checkpoint_callback and checkpoint_callback.best_model_path:
+        best_model_path = checkpoint_callback.best_model_path
+        print(f"베스트 모델 경로: {best_model_path}")
+        # 베스트 모델 로드
+        model = ClassificationModule.load_from_checkpoint(
+            best_model_path,
+            config=OmegaConf.to_container(cfg, resolve=True)
+        )
+    else:
+        print("베스트 모델을 찾을 수 없습니다. 현재 모델을 사용합니다.")
     
     # 테스트 예측 수행
     print("테스트 예측 수행 중...")
@@ -149,8 +164,8 @@ def main(cfg: DictConfig):
         s3_handler = create_s3_handler()
         if s3_handler:
             model_path = experiment_dir / "best_model.pth"
-            torch.save(model.state_dict(), model_path)
-            s3_handler.upload_model(str(model_path), cfg.experiment.name)
+            s3_path = f"models/{cfg.experiment.name}/best_model.pth"
+            s3_handler.save_model(model, str(model_path), s3_path)
     
     print("=== 실험 완료 ===")
     print(f"예측 결과: {predictions_path}")

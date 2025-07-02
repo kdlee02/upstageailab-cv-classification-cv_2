@@ -1,0 +1,3 @@
+_target_: src.schedulers.cosine.CosineScheduler
+T_max: 100
+eta_min: 0.0 

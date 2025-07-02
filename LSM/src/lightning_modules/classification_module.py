@@ -11,6 +11,13 @@ from src.models.vit import VisionTransformerModel
 from src.optimizers.adam import AdamOptimizer
 from src.optimizers.adamw import AdamWOptimizer
 from src.optimizers.sgd import SGDOptimizer
+from src.schedulers.cosine import CosineScheduler
+from src.schedulers.step import StepScheduler
+from src.schedulers.exponential import ExponentialScheduler
+from src.schedulers.plateau import PlateauScheduler
+from src.schedulers.warmup_cosine import WarmupCosineScheduler
+from src.schedulers.warmup_linear import WarmupLinearScheduler
+from src.schedulers.cosine_warm_restart import CosineWarmRestartScheduler
 from src.losses.cross_entropy import CrossEntropyLoss
 from src.losses.focal import FocalLoss
 
@@ -114,7 +121,7 @@ class ClassificationModule(pl.LightningModule):
         return loss
     
     def configure_optimizers(self):
-        """설정에 따라 옵티마이저 생성"""
+        """설정에 따라 옵티마이저와 스캐줄러 생성"""
         optimizer_config = self.config['optimizer']
         optimizer_name = optimizer_config['name']
         
@@ -137,4 +144,88 @@ class ClassificationModule(pl.LightningModule):
         else:
             raise ValueError(f"지원하지 않는 옵티마이저: {optimizer_name}")
         
-        return optimizer(self.parameters())
+        optimizer = optimizer(self.parameters())
+        
+        # 스캐줄러 설정
+        scheduler_config = self.config.get('scheduler', {})
+        scheduler_name = scheduler_config.get('name', 'cosine')
+        
+        if scheduler_name == 'cosine':
+            params = scheduler_config.get('params', {})
+            scheduler = CosineScheduler(
+                T_max=params.get('T_max', scheduler_config.get('T_max', 100)),
+                eta_min=params.get('eta_min', scheduler_config.get('eta_min', 0.0))
+            )
+        elif scheduler_name == 'step':
+            params = scheduler_config.get('params', {})
+            scheduler = StepScheduler(
+                step_size=params.get('step_size', scheduler_config.get('step_size', 30)),
+                gamma=params.get('gamma', scheduler_config.get('gamma', 0.1))
+            )
+        elif scheduler_name == 'exponential':
+            params = scheduler_config.get('params', {})
+            scheduler = ExponentialScheduler(
+                gamma=params.get('gamma', scheduler_config.get('gamma', 0.95))
+            )
+        elif scheduler_name == 'plateau':
+            params = scheduler_config.get('params', {})
+            scheduler = PlateauScheduler(
+                mode=params.get('mode', scheduler_config.get('mode', 'min')),
+                factor=params.get('factor', scheduler_config.get('factor', 0.1)),
+                patience=params.get('patience', scheduler_config.get('patience', 10)),
+                verbose=params.get('verbose', scheduler_config.get('verbose', False)),
+                threshold=params.get('threshold', scheduler_config.get('threshold', 1e-4)),
+                threshold_mode=params.get('threshold_mode', scheduler_config.get('threshold_mode', 'rel')),
+                cooldown=params.get('cooldown', scheduler_config.get('cooldown', 0)),
+                min_lr=params.get('min_lr', scheduler_config.get('min_lr', 0)),
+                eps=params.get('eps', scheduler_config.get('eps', 1e-8))
+            )
+        elif scheduler_name == 'warmup_cosine':
+            params = scheduler_config.get('params', {})
+            scheduler = WarmupCosineScheduler(
+                warmup_steps=params.get('warmup_steps', scheduler_config.get('warmup_steps', 1000)),
+                max_steps=params.get('max_steps', scheduler_config.get('max_steps', 10000)),
+                min_lr=params.get('min_lr', scheduler_config.get('min_lr', 0.0)),
+                warmup_start_lr=params.get('warmup_start_lr', scheduler_config.get('warmup_start_lr', 0.0))
+            )
+        elif scheduler_name == 'warmup_linear':
+            params = scheduler_config.get('params', {})
+            scheduler = WarmupLinearScheduler(
+                warmup_steps=params.get('warmup_steps', scheduler_config.get('warmup_steps', 1000)),
+                max_steps=params.get('max_steps', scheduler_config.get('max_steps', 10000)),
+                min_lr=params.get('min_lr', scheduler_config.get('min_lr', 0.0)),
+                warmup_start_lr=params.get('warmup_start_lr', scheduler_config.get('warmup_start_lr', 0.0))
+            )
+        elif scheduler_name == 'cosine_warm_restart':
+            # params 섹션에서 파라미터를 가져오거나 직접 설정에서 가져옴
+            params = scheduler_config.get('params', {})
+            scheduler = CosineWarmRestartScheduler(
+                T_0=params.get('T_0', scheduler_config.get('T_0', 10)),
+                T_mult=params.get('T_mult', scheduler_config.get('T_mult', 2)),
+                eta_min=params.get('eta_min', scheduler_config.get('eta_min', 0.0))
+            )
+        else:
+            raise ValueError(f"지원하지 않는 스캐줄러: {scheduler_name}")
+        
+        scheduler = scheduler(optimizer)
+        
+        # 스캐줄러 설정에 따라 반환
+        if scheduler_name == 'plateau':
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "monitor": "val_loss",
+                    "interval": "epoch",
+                    "frequency": 1
+                }
+            }
+        else:
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "interval": "step",
+                    "frequency": 1
+                }
+            }
