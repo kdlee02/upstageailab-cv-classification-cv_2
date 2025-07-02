@@ -1,0 +1,2 @@
+_target_: src.datasets.basic.BasicDataset
+image_size: 224 

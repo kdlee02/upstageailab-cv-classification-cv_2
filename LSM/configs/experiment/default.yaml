@@ -1,0 +1,3 @@
+name: "default_experiment"          # 실험 이름
+description: "기본 실험"       # 실험 설명
+tags: ["default"]                  # 실험 태그 (리스트)

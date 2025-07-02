@@ -1,0 +1,8 @@
+name: "team4_experiment"
+description: "팀원4 실험 - ResNet50 + SGD + 증강 데이터"
+tags: ["team4", "resnet50", "sgd"]
+model: resnet50
+optimizer: sgd
+dataset: augmented
+loss: focal
+transform: augmented 

@@ -1,0 +1,66 @@
+# Hydra 기본 설정
+defaults:
+  - _self_
+  - experiment: default
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+# 기본 설정
+seed: 42
+num_classes: 17
+
+# 저장 설정
+save:
+  model_dir: "experiments"
+  checkpoint_dir: "checkpoints"
+
+# 학습 설정
+training:
+  batch_size: 32
+  max_epochs: 50
+  num_workers: 4
+  patience: 10
+
+# 모델 설정
+model:
+  name: "efficientnet"
+  model_name: "efficientnet-b1"
+  pretrained: true
+  dropout_rate: 0.5
+  num_classes: 17
+
+# 데이터셋 설정
+dataset:
+  name: "augmented"
+  train_csv: "data/train.csv"
+  train_img_dir: "data/train"
+  val_csv: "data/train.csv"  # 실제로는 별도의 검증 CSV가 필요
+  val_img_dir: "data/train"
+
+# 변환 설정
+transform:
+  name: "augmented"
+  image_size: 224
+
+# 옵티마이저 설정
+optimizer:
+  name: "adamw"
+  lr: 0.001
+  weight_decay: 0.0001
+
+# 손실 함수 설정
+loss:
+  name: "focal"
+  label_smoothing: 0.0
+
+# 로깅 설정
+logging:
+  project_name: "document-classification"
+  log_every_n_steps: 50
+  save_top_k: 3
+
+# S3 설정 (선택사항)
+s3:
+  enabled: false
+  bucket_name: ""
+  region_name: "us-east-1"

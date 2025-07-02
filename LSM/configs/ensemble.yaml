@@ -1,0 +1,40 @@
+# 앙상블 설정
+ensemble:
+  enabled: true
+  method: "averaging"  # voting, averaging, weighted, stacking
+  models:
+    - name: "resnet50"
+      checkpoint_path: "checkpoints/default_experiment/best-epoch=10-val_macro_f1=0.8500.ckpt"
+      weight: 1.0
+    - name: "efficientnet"
+      checkpoint_path: "checkpoints/default_experiment/best-epoch=15-val_macro_f1=0.8600.ckpt"
+      weight: 1.0
+    - name: "vit"
+      checkpoint_path: "checkpoints/default_experiment/best-epoch=12-val_macro_f1=0.8400.ckpt"
+      weight: 1.0
+  
+  # 테스트 타임 증강 설정
+  tta:
+    enabled: false
+    augmentations:
+      - type: "horizontal_flip"
+        probability: 0.5
+      - type: "rotation"
+        degrees: [90, 180, 270]
+      - type: "color_jitter"
+        brightness: 0.1
+        contrast: 0.1
+        saturation: 0.1
+        hue: 0.1
+  
+  # 교차 검증 설정
+  cross_validation:
+    enabled: false
+    n_folds: 5
+    fold_checkpoints: []
+  
+  # 스냅샷 앙상블 설정
+  snapshot:
+    enabled: false
+    checkpoint_paths: []
+    epochs: [10, 20, 30, 40, 50] 

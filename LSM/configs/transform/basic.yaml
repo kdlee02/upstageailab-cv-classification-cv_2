@@ -1,0 +1,2 @@
+_target_: src.transforms.basic.BasicTransform
+image_size: 224 

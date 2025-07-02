@@ -1,0 +1,4 @@
+_target_: src.models.resnet50.ResNet50Model
+pretrained: true
+num_classes: 17
+dropout_rate: 0.5 

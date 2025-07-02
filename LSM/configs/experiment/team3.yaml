@@ -1,0 +1,8 @@
+name: "team3_experiment"
+description: "팀원3 실험 - ViT + SGD + 기본 데이터"
+tags: ["team3", "vit", "sgd"]
+model: vit
+optimizer: sgd
+dataset: basic
+loss: cross_entropy
+transform: basic 

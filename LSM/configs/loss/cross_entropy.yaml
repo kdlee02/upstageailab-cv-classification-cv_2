@@ -1,0 +1,2 @@
+_target_: src.losses.cross_entropy.CrossEntropyLoss
+label_smoothing: 0.1 
