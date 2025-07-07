@@ -20,6 +20,12 @@ class EfficientNetModel(nn.Module):
             self.backbone = timm.create_model('efficientnet_b3', pretrained=True, num_classes=num_classes)
         elif model_name == "efficientnet-b4":
             self.backbone = timm.create_model('efficientnet_b4', pretrained=True, num_classes=num_classes)
+        elif model_name == "efficientnet-b5":
+            self.backbone = timm.create_model('efficientnet_b5', pretrained=True, num_classes=num_classes)
+        elif model_name == "efficientnet-b6":
+            self.backbone =timm.create_model('tf_efficientnet_b6.aa_in1k', pretrained=True, num_classes=num_classes)
+        elif model_name == "efficientnet-b7":
+            self.backbone = timm.create_model('efficientnet_b7', pretrained=True, num_classes=num_classes)
         else:
             raise ValueError(f"지원하지 않는 EfficientNet 모델: {model_name}")
         

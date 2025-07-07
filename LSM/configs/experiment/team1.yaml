@@ -1,8 +1,9 @@
-name: "lsm_resnet50_size_256_batch_16_cosine_warm_restart_augmented++"
-description: "팀원1 실험 - resnet50 + AdamW + 증강 데이터"
-tags: ["team1", "resnet50", "adamw"]
-model: resnet50
-optimizer: adamw
+name: "lsm_efficientnet-b3_size_224_batch_32_adamw_augmented_v3+base"
+description: "팀원1 실험 - efficientnet-b3 + cosine + 증강 데이터"
+tags: ["team1", efficientnet-b3", "cosine"]
+model: efficientnet-b3
+optimizer: cosine
 dataset: augmented
 loss: cross_entropy
 transform: augmented
+scheduler: exponential

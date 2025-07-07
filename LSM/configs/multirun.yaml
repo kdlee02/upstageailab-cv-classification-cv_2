@@ -1,10 +1,28 @@
-# Hydra 기본 설정
+# 멀티런 설정 파일
 defaults:
   - _self_
   - experiment: default
   - scheduler: cosine
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
+
+# 멀티런 설정
+hydra:
+  sweeper:
+    params:
+      # 실험별 실행
+      experiment: default,team1,team2,team3,team4,team5
+      
+      # 하이퍼파라미터 스윕 (선택사항)
+      # optimizer.lr: 0.001,0.0001,0.00001
+      # training.batch_size: 16,32,64
+      # model.dropout_rate: 0.3,0.5,0.7
+      
+      # 스케줄러 스윕 (선택사항)
+      # scheduler: cosine,step,exponential
+      
+      # 모델 스윕 (선택사항)
+      # model.model_name: efficientnet-b0,efficientnet-b4,efficientnet-b7
 
 # 기본 설정
 seed: 42
@@ -25,7 +43,7 @@ training:
 # 모델 설정
 model:
   name: "efficientnet"
-  model_name: "efficientnet-b3"
+  model_name: "efficientnet-b4"
   pretrained: true
   dropout_rate: 0.5
   num_classes: 17
@@ -33,14 +51,6 @@ model:
 # 데이터셋 설정
 dataset:
   name: "augmented"
-  # train_csv: "data/train.csv"
-  # train_img_dir: "data/train"
-  # val_csv: "data/train.csv"
-  # val_img_dir: "data/train"
-  # train_csv: "data/train_augmented2.csv"
-  # train_img_dir: "data/train_augmented2"
-  # val_csv: "data/val_augmented2.csv"
-  # val_img_dir: "data/val_augmented2"
   train_csv: "data/train_augmented(base+1+2).csv"
   train_img_dir: "data/train_augmented(base+1+2)"
   val_csv: "data/val_augmented(base+1+2).csv"
@@ -60,13 +70,8 @@ optimizer:
 # 스캐줄러 설정
 scheduler:
   name: "cosine"
-  # 스캐줄러별 설정은 각 스캐줄러 yaml 파일에서 관리
-  # 또는 여기서 직접 파라미터 설정 가능
   params:
     T_max: 100
-    # T_0: 10
-    # T_mult: 2
-    # eta_min: 0.0000001
 
 # 손실 함수 설정
 loss:
@@ -79,8 +84,8 @@ logging:
   log_every_n_steps: 50
   save_top_k: 3
 
-# S3 설정 (선택사항)
+# S3 설정
 s3:
   enabled: false
   bucket_name: ""
-  region_name: "us-east-1"
+  region_name: "us-east-1" 

@@ -43,11 +43,12 @@ def create_data_loaders(config):
     #     stratify=full_data.iloc[:, 1] if len(full_data.columns) > 1 else None
     # )
 
+
     if dataset_name == 'augmented':
-        train_data = pd.read_csv('./data/train_augmented.csv')
-        train_data['path'] = './data/train_augmented/'
-        val_data = pd.read_csv('./data/val_augmented.csv')
-        val_data['path'] = './data/val_augmented/'
+        train_data = pd.read_csv('./data/train_augmented(base+1+2).csv')
+        train_data['path'] = './data/train_augmented(base+1+2)/'
+        val_data = pd.read_csv('./data/val_augmented(base+1+2).csv')
+        val_data['path'] = './data/val_augmented(base+1+2)/'
     else:
         train_data, val_data = train_test_split(
             full_data,

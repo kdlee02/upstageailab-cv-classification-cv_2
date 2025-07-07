@@ -11,6 +11,7 @@ from src.models.vit import VisionTransformerModel
 from src.optimizers.adam import AdamOptimizer
 from src.optimizers.adamw import AdamWOptimizer
 from src.optimizers.sgd import SGDOptimizer
+from src.optimizers.rmsprop import RMSpropOptimizer
 from src.schedulers.cosine import CosineScheduler
 from src.schedulers.step import StepScheduler
 from src.schedulers.exponential import ExponentialScheduler
@@ -140,6 +141,14 @@ class ClassificationModule(pl.LightningModule):
                 lr=optimizer_config.get('lr', 0.01),
                 momentum=optimizer_config.get('momentum', 0.9),
                 weight_decay=optimizer_config.get('weight_decay', 0.0001)
+            )
+        elif optimizer_name == 'rmsprop':
+            optimizer = RMSpropOptimizer(
+                lr=optimizer_config.get('lr', 0.001),
+                weight_decay=optimizer_config.get('weight_decay', 0.0001),
+                alpha=optimizer_config.get('alpha', 0.99),
+                eps=optimizer_config.get('eps', 1e-08),
+                momentum=optimizer_config.get('momentum', 0)
             )
         else:
             raise ValueError(f"지원하지 않는 옵티마이저: {optimizer_name}")
