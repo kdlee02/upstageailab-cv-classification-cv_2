@@ -4,12 +4,13 @@
 
 ## 주요 기능
 
-- 다양한 모델 지원 (ResNet50, EfficientNet, Vision Transformer)
+- 다양한 모델 지원 (ResNet50, EfficientNet, Vision Transformer, **ConvNeXt**)
 - 다양한 손실 함수 (Cross Entropy, Focal Loss)
 - 다양한 옵티마이저 (Adam, AdamW, SGD)
 - **다양한 스캐줄러 지원 (Cosine, Step, Exponential, Plateau, Warmup Cosine, Warmup Linear, Cosine Warm Restart)**
 - 데이터 증강 기법
 - **앙상블 기법 지원**
+- **클래스별 성능 분석 및 시각화**
 - 실험 관리 및 로깅 (Weights & Biases)
 - **S3 모델 저장 지원**
 
@@ -105,6 +106,18 @@ python example_env_usage.py
 python example_scheduler_usage.py
 ```
 
+### 클래스별 메트릭 사용 예제
+
+```bash
+python example_class_metrics_usage.py
+```
+
+### ConvNeXt 모델 사용 예제
+
+```bash
+python example_convnext_usage.py
+```
+
 ### 스캐줄러 설정
 
 다양한 스캐줄러를 사용할 수 있습니다. `configs/config.yaml`에서 기본 스캐줄러를 설정하거나, 명령줄에서 지정할 수 있습니다:
@@ -183,6 +196,175 @@ T_0: 10
 T_mult: 2
 eta_min: 0.000001
 ```
+
+## 클래스별 성능 분석
+
+이 프로젝트는 클래스별 정확도, F1 점수, 손실을 측정하고 시각화하는 기능을 제공합니다.
+
+### 주요 기능
+
+- **클래스별 정확도**: 각 클래스별 개별 정확도 측정
+- **클래스별 F1 점수**: 각 클래스별 F1 점수 측정
+- **클래스별 손실**: 각 클래스별 평균 손실 계산
+- **혼동 행렬**: 클래스 간 예측 오류 분석
+- **훈련-검증 비교**: 과적합 분석을 위한 훈련/검증 성능 비교
+- **시각화**: 클래스별 성능을 그래프로 시각화
+
+### 사용 방법
+
+#### 1. 기본 실험에서 클래스별 메트릭 자동 생성
+
+`run_experiment.py`를 실행하면 자동으로 다음 파일들이 생성됩니다:
+
+- `val_class_metrics.csv`: 검증 데이터의 클래스별 메트릭
+- `val_class_performance.png`: 클래스별 성능 그래프
+- `confusion_matrix.png`: 혼동 행렬
+- `train_val_comparison.png`: 훈련-검증 성능 비교
+
+#### 2. 별도 클래스별 메트릭 평가
+
+```bash
+python example_class_metrics_usage.py
+```
+
+#### 3. 특정 클래스 성능만 평가
+
+```python
+from src.utils.class_metrics import evaluate_single_class_performance
+
+# 특정 클래스(예: 클래스 0)의 성능만 평가
+class_0_performance = evaluate_single_class_performance(
+    model=model,
+    dataloader=val_loader,
+    target_class=0,
+    device='cuda'
+)
+print(f"클래스 0 정확도: {class_0_performance['accuracy']:.4f}")
+```
+
+### 출력 예시
+
+```
+============================================================
+클래스별 성능 요약
+============================================================
+전체 정확도: 0.8542
+전체 F1 점수 (Macro): 0.8234
+
+클래스          정확도     F1 점수   손실      샘플 수  
+------------------------------------------------------------
+class_0        0.9234     0.9123     0.1234    150      
+class_1        0.8765     0.8543     0.2345    120      
+class_2        0.7890     0.7654     0.3456    180      
+...
+```
+
+### 시각화 예시
+
+- **클래스별 정확도 막대 그래프**: 각 클래스의 정확도를 한눈에 비교
+- **클래스별 F1 점수 막대 그래프**: 각 클래스의 F1 점수 비교
+- **클래스별 손실 막대 그래프**: 각 클래스의 평균 손실 비교
+- **혼동 행렬 히트맵**: 클래스 간 예측 오류 패턴 분석
+- **훈련-검증 비교 그래프**: 과적합 여부 분석
+
+## ConvNeXt 모델
+
+ConvNeXt는 Vision Transformer의 설계 원칙을 CNN에 적용한 최신 모델입니다.
+
+### 지원하는 ConvNeXt 모델
+
+- **ConvNeXt Tiny**: 가장 작은 모델 (28M 파라미터)
+- **ConvNeXt Small**: 작은 모델 (50M 파라미터)
+- **ConvNeXt Base**: 중간 크기 모델 (88M 파라미터)
+- **ConvNeXt Large**: 큰 모델 (198M 파라미터)
+
+### ConvNeXt 변형 모델
+
+- **기본 ConvNeXt**: 표준 ConvNeXt 모델
+- **ConvNeXt + Attention**: 어텐션 메커니즘 추가
+- **ConvNeXt + Focal Loss**: Focal Loss 최적화
+
+### 사용 방법
+
+#### 1. 명령줄에서 ConvNeXt 모델 지정
+
+```bash
+# ConvNeXt Tiny 사용
+python run_experiment.py model=convnext
+
+# ConvNeXt Small 사용
+python run_experiment.py model=convnext_small
+
+# ConvNeXt Base 사용
+python run_experiment.py model=convnext_base
+
+# ConvNeXt Large 사용
+python run_experiment.py model=convnext_large
+
+# 어텐션 메커니즘 추가
+python run_experiment.py model=convnext_with_attention
+
+# Focal Loss 최적화
+python run_experiment.py model=convnext_with_focal
+```
+
+#### 2. 설정 파일에서 ConvNeXt 모델 설정
+
+```yaml
+# configs/config.yaml
+model:
+  name: convnext
+  model_name: convnext_tiny  # convnext_tiny, convnext_small, convnext_base, convnext_large
+  dropout_rate: 0.1
+  use_attention: false
+  use_focal_loss: false
+  pretrained: true
+  alpha: 1.0  # Focal Loss alpha (use_focal_loss가 true일 때)
+  gamma: 2.0  # Focal Loss gamma (use_focal_loss가 true일 때)
+  attention_dim: 256  # 어텐션 차원 (use_attention이 true일 때)
+```
+
+#### 3. 프로그래밍 방식으로 ConvNeXt 모델 생성
+
+```python
+from src.models.convnext import create_convnext_model
+
+# 기본 ConvNeXt Tiny
+model = create_convnext_model(
+    model_name='convnext_tiny',
+    num_classes=17,
+    dropout_rate=0.1,
+    pretrained=True
+)
+
+# 어텐션 메커니즘 추가
+model = create_convnext_model(
+    model_name='convnext_tiny',
+    num_classes=17,
+    dropout_rate=0.1,
+    use_attention=True,
+    attention_dim=256,
+    pretrained=True
+)
+
+# Focal Loss 최적화
+model = create_convnext_model(
+    model_name='convnext_tiny',
+    num_classes=17,
+    dropout_rate=0.1,
+    use_focal_loss=True,
+    alpha=1.0,
+    gamma=2.0,
+    pretrained=True
+)
+```
+
+### ConvNeXt 모델 특징
+
+- **효율적인 아키텍처**: Vision Transformer의 설계 원칙을 CNN에 적용
+- **높은 성능**: ImageNet에서 우수한 성능 달성
+- **다양한 크기**: Tiny부터 Large까지 다양한 모델 크기 제공
+- **확장 가능**: 어텐션 메커니즘, Focal Loss 등 다양한 변형 지원
 
 ### 앙상블 설정 예시
 

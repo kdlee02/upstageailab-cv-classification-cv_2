@@ -31,4 +31,4 @@ class TestDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         
-        return image, self.img_files[idx] 
+        return image, self.img_files[idx]

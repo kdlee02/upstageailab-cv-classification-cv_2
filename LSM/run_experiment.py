@@ -23,6 +23,14 @@ from src.utils.data_loader import create_data_loaders
 from src.utils.prediction import predict_test_set, save_predictions_in_sample_order
 from src.utils.s3_utils import create_s3_handler
 from src.utils.env_utils import check_required_env_vars, get_wandb_config
+from src.utils.class_metrics import (
+    evaluate_model_with_class_metrics,
+    print_class_performance_summary,
+    save_class_metrics_to_csv,
+    plot_class_performance,
+    plot_confusion_matrix,
+    compare_train_val_performance
+)
 from src.datasets.basic import BasicDataset
 from src.datasets.test_dataset import TestDataset
 from src.transforms.basic import BasicTransform
@@ -70,6 +78,7 @@ def main(cfg: DictConfig):
     
     # 모델 생성
     model = ClassificationModule(OmegaConf.to_container(cfg, resolve=True))
+    model.set_class_names(class_names)
     
     # 실험 디렉터리 생성
     experiment_dir = Path(cfg.save.model_dir) / cfg.experiment.name
@@ -135,12 +144,55 @@ def main(cfg: DictConfig):
             best_model_path,
             config=OmegaConf.to_container(cfg, resolve=True)
         )
+        model.set_class_names(class_names)
     else:
         print("베스트 모델을 찾을 수 없습니다. 현재 모델을 사용합니다.")
     
-    # 테스트 예측 수행
-    print("테스트 예측 수행 중...")
+    # 클래스별 성능 평가
+    print("\n=== 클래스별 성능 평가 ===")
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    # 검증 데이터로 클래스별 성능 평가
+    print("검증 데이터로 클래스별 성능 평가 중...")
+    val_results = evaluate_model_with_class_metrics(
+        model=model,
+        dataloader=val_loader,
+        device=device,
+        class_names=class_names
+    )
+    
+    # 클래스별 성능 요약 출력
+    print_class_performance_summary(val_results, class_names)
+    
+    # 클래스별 메트릭을 CSV로 저장
+    val_metrics_path = experiment_dir / "val_class_metrics.csv"
+    save_class_metrics_to_csv(val_results, str(val_metrics_path), class_names)
+    
+    # 클래스별 성능 시각화
+    val_plot_path = experiment_dir / "val_class_performance.png"
+    plot_class_performance(val_results, str(val_plot_path), class_names)
+    
+    # 혼동 행렬 시각화
+    confusion_plot_path = experiment_dir / "confusion_matrix.png"
+    plot_confusion_matrix(val_results, str(confusion_plot_path), class_names)
+    
+    # 훈련 데이터로도 클래스별 성능 평가 (과적합 분석용)
+    print("\n훈련 데이터로 클래스별 성능 평가 중...")
+    train_results = evaluate_model_with_class_metrics(
+        model=model,
+        dataloader=train_loader,
+        device=device,
+        class_names=class_names
+    )
+    
+    # 훈련 vs 검증 성능 비교
+    comparison_plot_path = experiment_dir / "train_val_comparison.png"
+    compare_train_val_performance(
+        train_results, val_results, str(comparison_plot_path), class_names
+    )
+    
+    # 테스트 예측 수행
+    print("\n=== 테스트 예측 수행 중...")
     
     # 모델을 device로 이동
     model = model.to(device)
@@ -169,6 +221,10 @@ def main(cfg: DictConfig):
     
     print("=== 실험 완료 ===")
     print(f"예측 결과: {predictions_path}")
+    print(f"검증 클래스별 메트릭: {val_metrics_path}")
+    print(f"검증 성능 그래프: {val_plot_path}")
+    print(f"혼동 행렬: {confusion_plot_path}")
+    print(f"훈련-검증 비교: {comparison_plot_path}")
     
     # wandb 종료
     wandb.finish()

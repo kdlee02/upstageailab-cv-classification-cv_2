@@ -2,12 +2,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
-from torchmetrics import Accuracy, F1Score
+from torchmetrics import Accuracy, F1Score, ConfusionMatrix
 import torchvision.transforms as transforms
+import numpy as np
+from collections import defaultdict
 
 from src.models.resnet50 import ResNet50Model
 from src.models.efficientnet import EfficientNetModel
 from src.models.vit import VisionTransformerModel
+from src.models.convnext import create_convnext_model
 from src.optimizers.adam import AdamOptimizer
 from src.optimizers.adamw import AdamWOptimizer
 from src.optimizers.sgd import SGDOptimizer
@@ -42,6 +45,26 @@ class ClassificationModule(pl.LightningModule):
         self.val_acc = Accuracy(task='multiclass', num_classes=config['num_classes'])
         self.train_f1 = F1Score(task='multiclass', num_classes=config['num_classes'], average='macro')
         self.val_f1 = F1Score(task='multiclass', num_classes=config['num_classes'], average='macro')
+        
+        # 클래스별 메트릭 초기화
+        self.train_class_acc = Accuracy(task='multiclass', num_classes=config['num_classes'], average='none')
+        self.val_class_acc = Accuracy(task='multiclass', num_classes=config['num_classes'], average='none')
+        self.train_class_f1 = F1Score(task='multiclass', num_classes=config['num_classes'], average='none')
+        self.val_class_f1 = F1Score(task='multiclass', num_classes=config['num_classes'], average='none')
+        
+        # 혼동 행렬 초기화
+        self.train_confusion = ConfusionMatrix(task='multiclass', num_classes=config['num_classes'])
+        self.val_confusion = ConfusionMatrix(task='multiclass', num_classes=config['num_classes'])
+        
+        # 클래스별 손실을 저장할 딕셔너리
+        self.class_losses = defaultdict(list)
+        
+        # 클래스명 설정 (기본값)
+        self.class_names = [f"class_{i}" for i in range(config['num_classes'])]
+    
+    def set_class_names(self, class_names):
+        """클래스명 설정"""
+        self.class_names = class_names
     
     def _create_model(self):
         """설정에 따라 모델 생성"""
@@ -66,6 +89,18 @@ class ClassificationModule(pl.LightningModule):
                 num_classes=self.config['num_classes'],
                 dropout_rate=model_config.get('dropout_rate', 0.1)
             )
+        elif model_name == 'convnext':
+            return create_convnext_model(
+                model_name=model_config.get('model_name', 'convnext_tiny'),
+                num_classes=self.config['num_classes'],
+                dropout_rate=model_config.get('dropout_rate', 0.1),
+                use_attention=model_config.get('use_attention', False),
+                use_focal_loss=model_config.get('use_focal_loss', False),
+                pretrained=model_config.get('pretrained', True),
+                alpha=model_config.get('alpha', 1.0),
+                gamma=model_config.get('gamma', 2.0),
+                attention_dim=model_config.get('attention_dim', 256)
+            )
         else:
             raise ValueError(f"지원하지 않는 모델: {model_name}")
     
@@ -89,6 +124,18 @@ class ClassificationModule(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
     
+    def _calculate_class_losses(self, outputs, targets):
+        """클래스별 손실 계산"""
+        class_losses = {}
+        for class_idx in range(self.config['num_classes']):
+            class_mask = (targets == class_idx)
+            if class_mask.sum() > 0:
+                class_outputs = outputs[class_mask]
+                class_targets = targets[class_mask]
+                class_loss = self.criterion(class_outputs, class_targets)
+                class_losses[class_idx] = class_loss.item()
+        return class_losses
+    
     def training_step(self, batch, batch_idx):
         images, targets = batch
         outputs = self(images)
@@ -97,11 +144,25 @@ class ClassificationModule(pl.LightningModule):
         # 메트릭 계산
         self.train_acc(outputs, targets)
         self.train_f1(outputs, targets)
+        self.train_class_acc(outputs, targets)
+        self.train_class_f1(outputs, targets)
+        self.train_confusion(outputs, targets)
+        
+        # 클래스별 손실 계산
+        class_losses = self._calculate_class_losses(outputs, targets)
+        for class_idx, class_loss in class_losses.items():
+            self.class_losses[f'train_class_{class_idx}_loss'].append(class_loss)
         
         # 로깅
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
         self.log('train_acc', self.train_acc, on_step=False, on_epoch=True, prog_bar=True)
         self.log('train_f1', self.train_f1, on_step=False, on_epoch=True, prog_bar=True)
+        
+        # 클래스별 메트릭 로깅
+        for i in range(self.config['num_classes']):
+            class_name = self.class_names[i] if i < len(self.class_names) else f'class_{i}'
+            self.log(f'train_{class_name}_acc', self.train_class_acc.compute()[i], on_step=False, on_epoch=True)
+            self.log(f'train_{class_name}_f1', self.train_class_f1.compute()[i], on_step=False, on_epoch=True)
         
         return loss
     
@@ -113,13 +174,132 @@ class ClassificationModule(pl.LightningModule):
         # 메트릭 계산
         self.val_acc(outputs, targets)
         self.val_f1(outputs, targets)
+        self.val_class_acc(outputs, targets)
+        self.val_class_f1(outputs, targets)
+        self.val_confusion(outputs, targets)
+        
+        # 클래스별 손실 계산
+        class_losses = self._calculate_class_losses(outputs, targets)
+        for class_idx, class_loss in class_losses.items():
+            self.class_losses[f'val_class_{class_idx}_loss'].append(class_loss)
         
         # 로깅
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('val_acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
         self.log('val_f1', self.val_f1, on_step=False, on_epoch=True, prog_bar=True)
         
+        # 클래스별 메트릭 로깅
+        for i in range(self.config['num_classes']):
+            class_name = self.class_names[i] if i < len(self.class_names) else f'class_{i}'
+            self.log(f'val_{class_name}_acc', self.val_class_acc.compute()[i], on_step=False, on_epoch=True)
+            self.log(f'val_{class_name}_f1', self.val_class_f1.compute()[i], on_step=False, on_epoch=True)
+        
         return loss
+    
+    def on_validation_epoch_end(self):
+        """검증 에포크 종료 시 클래스별 평균 손실 계산"""
+        # 클래스별 평균 손실 계산 및 로깅
+        for loss_key, losses in self.class_losses.items():
+            if losses:  # 손실이 있는 경우에만
+                avg_loss = np.mean(losses)
+                self.log(f'avg_{loss_key}', avg_loss, on_epoch=True)
+                # 리스트 초기화
+                self.class_losses[loss_key] = []
+    
+    def get_class_performance_summary(self, stage='val'):
+        """클래스별 성능 요약 반환"""
+        if stage == 'train':
+            class_acc = self.train_class_acc.compute()
+            class_f1 = self.train_class_f1.compute()
+            confusion = self.train_confusion.compute()
+        else:
+            class_acc = self.val_class_acc.compute()
+            class_f1 = self.val_class_f1.compute()
+            confusion = self.val_confusion.compute()
+        
+        summary = {}
+        for i in range(self.config['num_classes']):
+            class_name = self.class_names[i] if i < len(self.class_names) else f'class_{i}'
+            summary[class_name] = {
+                'accuracy': class_acc[i].item(),
+                'f1_score': class_f1[i].item(),
+                'confusion_matrix': confusion[i].tolist()
+            }
+        
+        return summary
+    
+    def predict_with_class_metrics(self, dataloader, device='cuda'):
+        """추론 시 클래스별 메트릭 계산"""
+        self.eval()
+        all_predictions = []
+        all_targets = []
+        all_outputs = []
+        
+        with torch.no_grad():
+            for batch in dataloader:
+                if len(batch) == 2:
+                    images, targets = batch
+                else:
+                    images = batch
+                    targets = None
+                
+                images = images.to(device)
+                outputs = self(images)
+                
+                if targets is not None:
+                    all_targets.append(targets.cpu())
+                all_outputs.append(outputs.cpu())
+                all_predictions.append(outputs.argmax(dim=1).cpu())
+        
+        all_predictions = torch.cat(all_predictions)
+        all_outputs = torch.cat(all_outputs)
+        
+        if all_targets:
+            all_targets = torch.cat(all_targets)
+            
+            # 클래스별 메트릭 계산
+            class_acc = Accuracy(task='multiclass', num_classes=self.config['num_classes'], average='none')
+            class_f1 = F1Score(task='multiclass', num_classes=self.config['num_classes'], average='none')
+            confusion = ConfusionMatrix(task='multiclass', num_classes=self.config['num_classes'])
+            
+            class_accuracies = class_acc(all_outputs, all_targets)
+            class_f1_scores = class_f1(all_outputs, all_targets)
+            confusion_matrix = confusion(all_outputs, all_targets)
+            
+            # 클래스별 손실 계산
+            class_losses = {}
+            for class_idx in range(self.config['num_classes']):
+                class_mask = (all_targets == class_idx)
+                if class_mask.sum() > 0:
+                    class_outputs = all_outputs[class_mask]
+                    class_targets = all_targets[class_mask]
+                    class_loss = self.criterion(class_outputs, class_targets)
+                    class_losses[class_idx] = class_loss.item()
+            
+            # 결과 요약
+            results = {
+                'predictions': all_predictions.numpy(),
+                'class_metrics': {}
+            }
+            
+            for i in range(self.config['num_classes']):
+                class_name = self.class_names[i] if i < len(self.class_names) else f'class_{i}'
+                results['class_metrics'][class_name] = {
+                    'accuracy': class_accuracies[i].item(),
+                    'f1_score': class_f1_scores[i].item(),
+                    'loss': class_losses.get(i, 0.0),
+                    'sample_count': (all_targets == i).sum().item()
+                }
+            
+            results['confusion_matrix'] = confusion_matrix.numpy()
+            results['overall_accuracy'] = (all_predictions == all_targets).float().mean().item()
+            
+            return results
+        else:
+            return {
+                'predictions': all_predictions.numpy(),
+                'outputs': all_outputs.numpy()
+            }
     
     def configure_optimizers(self):
         """설정에 따라 옵티마이저와 스캐줄러 생성"""
