@@ -6,8 +6,8 @@ from PIL import Image
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import numpy as np
-
-class AugmentedDataset(Dataset):
+import ast
+class Augmented_V2_Dataset(Dataset):
     """데이터 증강이 적용된 문서 분류 데이터셋"""
     
     def __init__(self, csv_file: str, img_dir: str, transform=None):
@@ -18,6 +18,7 @@ class AugmentedDataset(Dataset):
             transform: 이미지 변환 객체 (AugmentedTransform 등)
         """
         self.data = pd.read_csv(csv_file)
+        self.data['target'] = self.data['target'].apply(lambda x: ast.literal_eval(x))
         self.img_dir = img_dir
         self.transform = A.Compose([
             A.Resize(224, 224),
@@ -42,7 +43,8 @@ class AugmentedDataset(Dataset):
                 image = self.transform(image=np.array(image))['image']
 
         if len(self.data.columns) > 1:
-            label = self.data.iloc[idx, 1]
+            label = torch.tensor(self.data.iloc[idx, 1])
+            
             return image, label
         else:
             return image

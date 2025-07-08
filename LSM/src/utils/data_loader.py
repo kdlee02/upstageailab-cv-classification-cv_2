@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 
 from src.datasets.basic import BasicDataset
 from src.datasets.augmented import AugmentedDataset
+from src.datasets.augmented_v2 import Augmented_V2_Dataset
 from src.datasets.test_dataset import TestDataset
 from src.transforms.basic import BasicTransform
 from src.transforms.augmented import AugmentedTransform
@@ -22,7 +23,7 @@ def create_data_loaders(config):
         transform = BasicTransform(
             image_size=transform_config.get('image_size', 224)
         )
-    elif transform_name == 'augmented':
+    elif (transform_name == 'augmented') or (transform_name == 'augmented_v2'):
         transform = AugmentedTransform(
             image_size=transform_config.get('image_size', 224)
         )
@@ -43,16 +44,15 @@ def create_data_loaders(config):
     #     stratify=full_data.iloc[:, 1] if len(full_data.columns) > 1 else None
     # )
 
-
-    if dataset_name == 'augmented':
-        train_data = pd.read_csv('./data/train_augmented(base+1+2).csv')
-        train_data['path'] = './data/train_augmented(base+1+2)/'
-        val_data = pd.read_csv('./data/val_augmented(base+1+2).csv')
-        val_data['path'] = './data/val_augmented(base+1+2)/'
+    if dataset_name == 'augmented' or (transform_name == 'augmented_v2'):
+        train_data = pd.read_csv(dataset_config['train_csv'])
+        train_data['path'] = dataset_config['train_img_dir']
+        val_data = pd.read_csv(dataset_config['val_csv'])
+        val_data['path'] = dataset_config['val_img_dir']
     else:
         train_data, val_data = train_test_split(
             full_data,
-            test_size=0.2,  # 5:5 비율로 설정
+            test_size=0.5,  # 5:5 비율로 설정
             random_state=config.get('seed', 42),
             # 열의 위치 대신 '이름'을 사용하여 stratify 지정 (더 안정적인 방법)
             stratify=full_data['target'] if 'target' in full_data.columns else None
@@ -87,6 +87,17 @@ def create_data_loaders(config):
             transform=transform
         )
         val_dataset = AugmentedDataset(
+            csv_file=val_csv,
+            img_dir=dataset_config['val_img_dir'],
+            transform=transform
+        )
+    elif dataset_name == 'augmented_v2':
+        train_dataset = Augmented_V2_Dataset(
+            csv_file=train_csv,
+            img_dir=dataset_config['train_img_dir'],
+            transform=transform
+        )
+        val_dataset = Augmented_V2_Dataset(
             csv_file=val_csv,
             img_dir=dataset_config['val_img_dir'],
             transform=transform

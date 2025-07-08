@@ -65,6 +65,7 @@ def main(cfg: DictConfig):
         img_dir='data/test',
         transform=transform
     )
+    
     test_loader = DataLoader(
         test_dataset,
         batch_size=cfg.training.batch_size,

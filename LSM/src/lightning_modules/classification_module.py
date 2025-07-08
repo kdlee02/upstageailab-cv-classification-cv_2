@@ -138,6 +138,10 @@ class ClassificationModule(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         images, targets = batch
+        # 라벨 스무딩이 적용된 경우 클래스 인덱스로 변환
+        if targets.dim() > 1:
+            targets = targets.argmax(dim=1)
+        targets = targets.long()
         outputs = self(images)
         loss = self.criterion(outputs, targets)
         
@@ -168,6 +172,10 @@ class ClassificationModule(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         images, targets = batch
+        # 라벨 스무딩이 적용된 경우 클래스 인덱스로 변환
+        if targets.dim() > 1:
+            targets = targets.argmax(dim=1)
+        targets = targets.long()
         outputs = self(images)
         loss = self.criterion(outputs, targets)
         

@@ -15,11 +15,11 @@ from typing import Dict, List, Tuple, Optional
 def calculate_class_metrics(predictions: torch.Tensor, targets: torch.Tensor, 
                           num_classes: int, class_names: Optional[List[str]] = None) -> Dict:
     """
-    클래스별 정확도, F1 점수, 손실을 계산합니다.
+    클래스별 메트릭을 계산합니다.
     
     Args:
-        predictions: 모델 예측값 (logits)
-        targets: 실제 레이블
+        predictions: 모델 예측 (logits)
+        targets: 타겟 라벨 (라벨 스무딩이 적용된 경우 자동으로 처리)
         num_classes: 클래스 수
         class_names: 클래스명 리스트 (선택사항)
     
@@ -28,6 +28,13 @@ def calculate_class_metrics(predictions: torch.Tensor, targets: torch.Tensor,
     """
     if class_names is None:
         class_names = [f"class_{i}" for i in range(num_classes)]
+    
+    # 라벨 스무딩이 적용된 targets를 클래스 인덱스로 변환
+    if targets.dim() > 1:
+        targets = targets.argmax(dim=1)
+    
+    # targets를 long 타입으로 변환
+    targets = targets.long()
     
     # 예측 클래스
     pred_classes = predictions.argmax(dim=1)

@@ -1,0 +1,2 @@
+_target_: src.losses.kldiv.KLDivLoss
+reduction: 'batchmean' 

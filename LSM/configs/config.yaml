@@ -32,7 +32,7 @@ model:
 
 # 데이터셋 설정
 dataset:
-  name: "augmented"
+  name: "augmented_v2"
   # train_csv: "data/train.csv"
   # train_img_dir: "data/train"
   # val_csv: "data/train.csv"
@@ -41,15 +41,19 @@ dataset:
   # train_img_dir: "data/train_augmented2"
   # val_csv: "data/val_augmented2.csv"
   # val_img_dir: "data/val_augmented2"
-  train_csv: "data/train_augmented(base+1+2).csv"
-  train_img_dir: "data/train_augmented(base+1+2)"
-  val_csv: "data/val_augmented(base+1+2).csv"
-  val_img_dir: "data/val_augmented(base+1+2)"
+  # train_csv: "data/train_augmented(base+1+2).csv"
+  # train_img_dir: "data/train_augmented(base+1+2)"
+  # val_csv: "data/val_augmented(base+1+2).csv"
+  # val_img_dir: "data/val_augmented(base+1+2)"
+  train_csv: "data/train_augmented_v2/train_augmented_v2.csv"
+  train_img_dir: "data/train_augmented_v2/images/"
+  val_csv: "data/val_augmented_v2/val_augmented_v2.csv"
+  val_img_dir: "data/val_augmented_v2/images/"
 
 # 변환 설정
 transform:
-  name: "augmented"
-  image_size: 224
+  name: "augmented_v2"
+  image_size: 380
 
 # 옵티마이저 설정
 optimizer:
@@ -74,7 +78,9 @@ loss:
   # label_smoothing: 0.0
   name : "focal"
   alpha: 1.0
-  gamma: 2.0 
+  gamma: 2.0
+
+
   # 로깅 설정
 logging:
   project_name: "document-classification"

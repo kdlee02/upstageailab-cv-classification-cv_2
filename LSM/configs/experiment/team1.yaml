@@ -1,9 +1,9 @@
-name: "lsm_convnext_small_size_224_batch_32_focal_adamw_augmented_v3+base"
-description: "팀원1 실험 - convnext_small + cosine + 증강 데이터"
-tags: ["team1", convnext_small", "cosine"]
-model: convnext_small
+name: "lsm_convnext_size_380_batch_32_focal_adamw_new_augmented_v2"
+description: "팀원1 실험 - convnext + cosine + 증강 데이터"
+tags: ["team1", convnext", "cosine"]
+model: convnext
 optimizer: cosine
-dataset: augmented
-loss: cross_entropy
-transform: augmented
+dataset: augmented_v2
+loss: focal
+transform: augmented_v2
 scheduler: exponential
