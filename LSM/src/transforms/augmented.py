@@ -179,7 +179,7 @@ class AugmentedTransform:
         
         # VoronoiTessellation을 직접 사용
         self.pipeline = AugraphyPipeline([
-            SafeVoronoiTessellation(num_cells_range=(500, 800), p=0.5),
+            SafeVoronoiTessellation(num_cells_range=(500, 800), p=0.0),
         ])
         
         # 더 안전한 albumentations 변환들

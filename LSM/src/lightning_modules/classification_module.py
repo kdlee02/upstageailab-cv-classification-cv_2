@@ -6,6 +6,7 @@ from torchmetrics import Accuracy, F1Score, ConfusionMatrix
 import torchvision.transforms as transforms
 import numpy as np
 from collections import defaultdict
+from timm.data.mixup import Mixup
 
 from src.models.resnet50 import ResNet50Model
 from src.models.efficientnet import EfficientNetModel
@@ -61,6 +62,15 @@ class ClassificationModule(pl.LightningModule):
         
         # 클래스명 설정 (기본값)
         self.class_names = [f"class_{i}" for i in range(config['num_classes'])]
+        
+        # Mixup 초기화
+        self.mixup_fn = Mixup(
+            mixup_alpha=config.get('mixup_alpha', 0.2),
+            cutmix_alpha=config.get('cutmix_alpha', 0.0),
+            prob=config.get('mixup_prob', 0.5),
+            label_smoothing=config.get('label_smoothing', 0.1),
+            num_classes=config['num_classes']
+        )
     
     def set_class_names(self, class_names):
         """클래스명 설정"""
@@ -138,22 +148,31 @@ class ClassificationModule(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         images, targets = batch
-        # 라벨 스무딩이 적용된 경우 클래스 인덱스로 변환
-        if targets.dim() > 1:
-            targets = targets.argmax(dim=1)
-        targets = targets.long()
+        
+        # Mixup 적용 (있는 경우에만)
+        if hasattr(self, 'mixup_fn') and self.mixup_fn is not None:
+            images, targets = self.mixup_fn(images, targets)
+            # Mixup이 적용된 경우 targets는 원-핫 인코딩 형태 (소프트 라벨)
+            # 메트릭 계산을 위해 하드 라벨로 변환
+            targets_for_metrics = targets.argmax(dim=1)
+        else:
+            # Mixup이 적용되지 않은 경우
+            targets_for_metrics = targets
+        
+        targets_for_metrics = targets_for_metrics.long()
+        
         outputs = self(images)
-        loss = self.criterion(outputs, targets)
+        loss = self.criterion(outputs, targets)  # 원본 targets 사용 (원-핫 인코딩 또는 클래스 인덱스)
         
-        # 메트릭 계산
-        self.train_acc(outputs, targets)
-        self.train_f1(outputs, targets)
-        self.train_class_acc(outputs, targets)
-        self.train_class_f1(outputs, targets)
-        self.train_confusion(outputs, targets)
+        # 메트릭 계산 (클래스 인덱스 사용)
+        self.train_acc(outputs, targets_for_metrics)
+        self.train_f1(outputs, targets_for_metrics)
+        self.train_class_acc(outputs, targets_for_metrics)
+        self.train_class_f1(outputs, targets_for_metrics)
+        self.train_confusion(outputs, targets_for_metrics)
         
-        # 클래스별 손실 계산
-        class_losses = self._calculate_class_losses(outputs, targets)
+        # 클래스별 손실 계산 (클래스 인덱스 사용)
+        class_losses = self._calculate_class_losses(outputs, targets_for_metrics)
         for class_idx, class_loss in class_losses.items():
             self.class_losses[f'train_class_{class_idx}_loss'].append(class_loss)
         
@@ -172,22 +191,30 @@ class ClassificationModule(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         images, targets = batch
-        # 라벨 스무딩이 적용된 경우 클래스 인덱스로 변환
-        if targets.dim() > 1:
-            targets = targets.argmax(dim=1)
-        targets = targets.long()
+        
+        # Mixup 적용 (있는 경우에만)
+        if hasattr(self, 'mixup_fn') and self.mixup_fn is not None:
+            images, targets = self.mixup_fn(images, targets)
+            # Mixup이 적용된 경우 targets는 원-핫 인코딩 형태 (소프트 라벨)
+            # 메트릭 계산을 위해 하드 라벨로 변환
+            targets_for_metrics = targets.argmax(dim=1)
+        else:
+            # Mixup이 적용되지 않은 경우
+            targets_for_metrics = targets
+        
+        targets_for_metrics = targets_for_metrics.long()
         outputs = self(images)
         loss = self.criterion(outputs, targets)
         
-        # 메트릭 계산
-        self.val_acc(outputs, targets)
-        self.val_f1(outputs, targets)
-        self.val_class_acc(outputs, targets)
-        self.val_class_f1(outputs, targets)
-        self.val_confusion(outputs, targets)
+        # 메트릭 계산 (클래스 인덱스 사용)
+        self.val_acc(outputs, targets_for_metrics)
+        self.val_f1(outputs, targets_for_metrics)
+        self.val_class_acc(outputs, targets_for_metrics)
+        self.val_class_f1(outputs, targets_for_metrics)
+        self.val_confusion(outputs, targets_for_metrics)
         
-        # 클래스별 손실 계산
-        class_losses = self._calculate_class_losses(outputs, targets)
+        # 클래스별 손실 계산 (클래스 인덱스 사용)
+        class_losses = self._calculate_class_losses(outputs, targets_for_metrics)
         for class_idx, class_loss in class_losses.items():
             self.class_losses[f'val_class_{class_idx}_loss'].append(class_loss)
         
