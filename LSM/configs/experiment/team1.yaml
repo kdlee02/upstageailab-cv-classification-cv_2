@@ -1,7 +1,7 @@
-name: "lsm_convnext_large_size_384_batch_32_os3-4-7-14x3"
+name: "lsm_resnet50_size_244_batch_32_os3-4-7-14x3"
 description: "팀원1 실험 - convnext_large + cosine + 증강 데이터"
-tags: ["team1", "convnext_small", "cosine"]
-model: convnext_large
+tags: ["team1", "resnet50", "cosine"]
+model: resnet50
 optimizer: cosine
 dataset: augmented_v2
 loss: focal

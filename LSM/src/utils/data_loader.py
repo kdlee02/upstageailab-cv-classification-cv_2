@@ -62,12 +62,16 @@ def create_data_loaders(config):
 
     oversample_labels = [3,4,7,14]
     mask = train_data['target'].isin(oversample_labels)
-    df_minority = train_data[mask]
-    df_dup = pd.concat([df_minority] * 2, ignore_index=True)
-    df_aug = pd.concat([train_data, df_dup], ignore_index=True)
-    train_data = df_aug.sample(frac=1, random_state=config.get('seed', 42)).reset_index(drop=True)
+    # df_minority = train_data[mask]
+    # df_dup = pd.concat([df_minority] * 20, ignore_index=True)
+    # df_aug = pd.concat([train_data, df_dup], ignore_index=True)
+    # train_data = df_aug.sample(frac=1, random_state=config.get('seed', 42)).reset_index(drop=True)
  
+    df_dup1 = pd.concat([train_data[mask]] * 4, ignore_index=True)
+    df_dup2 = pd.concat([train_data[~mask]] * 3, ignore_index=True)
 
+    df_aug = pd.concat([df_dup1, df_dup2], ignore_index=True)
+    train_data = df_aug.sample(frac=1, random_state=config.get('seed', 42)).reset_index(drop=True)
     
     # 임시 CSV 파일 생성
     train_csv = 'temp_train.csv'

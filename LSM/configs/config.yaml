@@ -19,13 +19,13 @@ save:
 training:
   batch_size: 16
   max_epochs: 100
-  num_workers: 4
+  num_workers: 30
   patience: 30
 
 # 모델 설정
 model:
-  name: "convnext"
-  model_name: "convnext_large"
+  name: "resnet50"
+  # model_name: "convnext_large"
   pretrained: true
   dropout_rate: 0.5
   num_classes: 17
@@ -53,7 +53,7 @@ dataset:
 # 변환 설정
 transform:
   name: "augmented_v2"
-  image_size: 384
+  image_size: 224
 
 # 옵티마이저 설정
 optimizer:
