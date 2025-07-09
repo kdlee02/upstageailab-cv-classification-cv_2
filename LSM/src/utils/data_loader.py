@@ -44,21 +44,28 @@ def create_data_loaders(config):
     #     stratify=full_data.iloc[:, 1] if len(full_data.columns) > 1 else None
     # )
 
-    if dataset_name == 'augmented' or (transform_name == 'augmented_v2'):
-        train_data = pd.read_csv(dataset_config['train_csv'])
-        train_data['path'] = dataset_config['train_img_dir']
-        val_data = pd.read_csv(dataset_config['val_csv'])
-        val_data['path'] = dataset_config['val_img_dir']
-    else:
-        train_data, val_data = train_test_split(
-            full_data,
-            test_size=0.5,  # 5:5 비율로 설정
-            random_state=config.get('seed', 42),
-            # 열의 위치 대신 '이름'을 사용하여 stratify 지정 (더 안정적인 방법)
-            stratify=full_data['target'] if 'target' in full_data.columns else None
-        )
-    
-    
+    # if dataset_name == 'augmented' or (transform_name == 'augmented_v2'):
+    #     train_data = pd.read_csv(dataset_config['train_csv'])
+    #     train_data['path'] = dataset_config['train_img_dir']
+    #     val_data = pd.read_csv(dataset_config['val_csv'])
+    #     val_data['path'] = dataset_config['val_img_dir']
+    # else:
+    #     pass
+    train_data, val_data = train_test_split(
+        full_data,
+        test_size=0.2,  # 5:5 비율로 설정
+        random_state=config.get('seed', 42),
+        # 열의 위치 대신 '이름'을 사용하여 stratify 지정 (더 안정적인 방법)
+        shuffle=True,
+        stratify=full_data['target'] if 'target' in full_data.columns else None
+    )
+
+    oversample_labels = [3,4,7,14]
+    mask = train_data['target'].isin(oversample_labels)
+    df_minority = train_data[mask]
+    df_dup = pd.concat([df_minority] * 2, ignore_index=True)
+    df_aug = pd.concat([train_data, df_dup], ignore_index=True)
+    train_data = df_aug.sample(frac=1, random_state=config.get('seed', 42)).reset_index(drop=True)
  
 
     

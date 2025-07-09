@@ -18,13 +18,8 @@ class Augmented_V2_Dataset(Dataset):
             transform: 이미지 변환 객체 (AugmentedTransform 등)
         """
         self.data = pd.read_csv(csv_file)
-        self.data['target'] = self.data['target'].apply(lambda x: ast.literal_eval(x))
         self.img_dir = img_dir
-        self.transform = A.Compose([
-            A.Resize(224, 224),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2()
-        ])
+        self.transform = transform
     
     def __len__(self):
         return len(self.data)
@@ -37,10 +32,7 @@ class Augmented_V2_Dataset(Dataset):
         image = Image.open(img_path).convert('RGB')
         
         if self.transform:
-            try:
-                image = self.transform(image)
-            except:
-                image = self.transform(image=np.array(image))['image']
+            image = self.transform(image)
 
         if len(self.data.columns) > 1:
             label = torch.tensor(self.data.iloc[idx, 1])

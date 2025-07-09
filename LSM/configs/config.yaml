@@ -17,15 +17,15 @@ save:
 
 # 학습 설정
 training:
-  batch_size: 32
+  batch_size: 16
   max_epochs: 100
   num_workers: 4
-  patience: 10
+  patience: 30
 
 # 모델 설정
 model:
   name: "convnext"
-  model_name: "convnext_small"
+  model_name: "convnext_large"
   pretrained: true
   dropout_rate: 0.5
   num_classes: 17
@@ -33,10 +33,10 @@ model:
 # 데이터셋 설정
 dataset:
   name: "augmented_v2"
-  # train_csv: "data/train.csv"
-  # train_img_dir: "data/train"
-  # val_csv: "data/train.csv"
-  # val_img_dir: "data/train"
+  train_csv: "data/train_fixed.csv"
+  train_img_dir: "data/train"
+  val_csv: "data/train_fixed.csv"
+  val_img_dir: "data/train"
   # train_csv: "data/train_augmented2.csv"
   # train_img_dir: "data/train_augmented2"
   # val_csv: "data/val_augmented2.csv"
@@ -45,15 +45,15 @@ dataset:
   # train_img_dir: "data/train_augmented(base+1+2)"
   # val_csv: "data/val_augmented(base+1+2).csv"
   # val_img_dir: "data/val_augmented(base+1+2)"
-  train_csv: "data/train_augmented_v2/train_augmented_v2.csv"
-  train_img_dir: "data/train_augmented_v2/images/"
-  val_csv: "data/val_augmented_v2/val_augmented_v2.csv"
-  val_img_dir: "data/val_augmented_v2/images/"
+  # train_csv: "data/train_augmented_v2/train_augmented_v2.csv"
+  # train_img_dir: "data/train_augmented_v2/images/"
+  # val_csv: "data/val_augmented_v2/val_augmented_v2.csv"
+  # val_img_dir: "data/val_augmented_v2/images/"
 
 # 변환 설정
 transform:
   name: "augmented_v2"
-  image_size: 380
+  image_size: 384
 
 # 옵티마이저 설정
 optimizer:
