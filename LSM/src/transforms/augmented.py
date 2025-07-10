@@ -201,10 +201,6 @@ class AugraphyAlbumentationsWrapper(A.ImageOnlyTransform):
     def apply(self, img, **params):
         return self.augraphy_pipeline(img)
 
-
-
-
-
 class ResizeWithPadding:
     """
     이미지 비율을 유지하며 리사이즈하고, 남는 공간을 패딩으로 채웁니다.
@@ -241,119 +237,117 @@ class AugmentedTransform:
                             ToTensorV2()])
 
 
-        train_tf =  Compose([
-            # 크롭/회전/플립
-            RandomResizedCrop(height=self.image_size, width=self.image_size, scale=(0.8, 1.0), p=1.0),
-            HorizontalFlip(p=0.5),
-            VerticalFlip(p=0.3),
-            Rotate(limit=15, p=0.5),
+        # train_tf =  Compose([
+        #     # 크롭/회전/플립
+        #     RandomResizedCrop(height=self.image_size, width=self.image_size, scale=(0.8, 1.0), p=1.0),
+        #     HorizontalFlip(p=0.5),
+        #     VerticalFlip(p=0.3),
+        #     Rotate(limit=15, p=0.5),
 
-            # 색상 변화 (RandAugment 대체 조합)
-            ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=0.5),
-            RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-            # RandomContrast(limit=0.2, p=0.3),
-            CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.3),
+        #     # 색상 변화 (RandAugment 대체 조합)
+        #     ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=0.5),
+        #     RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
+        #     # RandomContrast(limit=0.2, p=0.3),
+        #     CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.3),
 
-            # 블러 / 지우기
-            GaussianBlur(blur_limit=(3, 3), sigma_limit=(0.1, 2.0), p=0.3),
-            CoarseDropout(
-                max_holes=1,
-                max_height=int(self.image_size * 0.2),
-                max_width=int(self.image_size * 0.2),
-                fill_value=0,
-                p=0.25
-            ),
+        #     # 블러 / 지우기
+        #     GaussianBlur(blur_limit=(3, 3), sigma_limit=(0.1, 2.0), p=0.3),
+        #     CoarseDropout(
+        #         max_holes=1,
+        #         max_height=int(self.image_size * 0.2),
+        #         max_width=int(self.image_size * 0.2),
+        #         fill_value=0,
+        #         p=0.25
+        #     ),
 
-            # 정규화 + Tensor
-            Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2()
-        ])
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.train_tf = {"Augraphy" : 
-                         Compose([
-                            # 크롭/회전/플립
-                            RandomResizedCrop(height=self.image_size, width=self.image_size, scale=(0.8, 1.0), p=1.0),
-                            HorizontalFlip(p=0.5),
-                            VerticalFlip(p=0.3),
-                            Rotate(limit=15, p=0.5),
+        #     # 정규화 + Tensor
+        #     Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        #     ToTensorV2()
+        # ])
+        
+        # self.train_tf = {"Augraphy" : 
+        #                  Compose([
+        #                     # 크롭/회전/플립
+        #                     RandomResizedCrop(height=self.image_size, width=self.image_size, scale=(0.8, 1.0), p=1.0),
+        #                     HorizontalFlip(p=0.5),
+        #                     VerticalFlip(p=0.3),
+        #                     Rotate(limit=15, p=0.5),
                             
-                            # 정규화 + Tensor
-                            Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                            ToTensorV2()]), 
-                        "NoAugraphy": train_tf}
+        #                     # 정규화 + Tensor
+        #                     Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        #                     ToTensorV2()]), 
+        #                 "NoAugraphy": train_tf}
+                        
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # no_augraphy_tf = torch.nn.Sequential(
+        #     # 크롭/회전/플립
+        #     K.RandomResizedCrop(size=(self.image_size, self.image_size),
+        #                         scale=(0.8, 1.0),
+        #                         ratio=(0.75, 1.3333),
+        #                         p=1.0),
+        #     K.RandomHorizontalFlip(p=0.5),
+        #     K.RandomVerticalFlip(p=0.3),
+        #     K.RandomRotation(degrees=15.0, p=0.5),
 
-        no_augraphy_tf = torch.nn.Sequential(
-            # 크롭/회전/플립
-            K.RandomResizedCrop(size=(self.image_size, self.image_size),
-                                scale=(0.8, 1.0),
-                                ratio=(0.75, 1.3333),
-                                p=1.0),
-            K.RandomHorizontalFlip(p=0.5),
-            K.RandomVerticalFlip(p=0.3),
-            K.RandomRotation(degrees=15.0, p=0.5),
+        #     # 색상 변화
+        #     K.ColorJitter(brightness=(0.8, 1.2),
+        #                   contrast=(0.8, 1.2),
+        #                   saturation=(0.8, 1.2),
+        #                   hue=(-0.2, 0.2),
+        #                   p=0.5),
 
-            # 색상 변화
-            K.ColorJitter(brightness=(0.8, 1.2),
-                          contrast=(0.8, 1.2),
-                          saturation=(0.8, 1.2),
-                          hue=(-0.2, 0.2),
-                          p=0.5),
+        #     # 블러
+        #     K.RandomGaussianBlur(kernel_size=(3, 3),
+        #                          sigma=(0.1, 2.0),
+        #                          p=0.3),
 
-            # 블러
-            K.RandomGaussianBlur(kernel_size=(3, 3),
-                                 sigma=(0.1, 2.0),
-                                 p=0.3),
+        #     # 랜덤 지우기 (CoarseDropout 대체)
+        #     K.RandomErasing(scale=(0.02, 0.2),
+        #                     ratio=(0.3, 3.3),
+        #                     value=0,
+        #                     p=0.25),
 
-            # 랜덤 지우기 (CoarseDropout 대체)
-            K.RandomErasing(scale=(0.02, 0.2),
-                            ratio=(0.3, 3.3),
-                            value=0,
-                            p=0.25),
+        #     # 정규화
+        #     K.Normalize(mean=(0.485, 0.456, 0.406),
+        #                 std=(0.229, 0.224, 0.225)),
+        # ).to(self.device)
 
-            # 정규화
-            K.Normalize(mean=(0.485, 0.456, 0.406),
-                        std=(0.229, 0.224, 0.225)),
-        ).to(self.device)
+        # # “Augraphy” 파이프라인: 간단 증강 + 정규화
+        # augraphy_tf = torch.nn.Sequential(
+        #     K.RandomResizedCrop(size=(self.image_size, self.image_size),
+        #                         scale=(0.8, 1.0),
+        #                         ratio=(0.75, 1.3333),
+        #                         p=1.0),
+        #     K.RandomHorizontalFlip(p=0.5),
+        #     K.RandomVerticalFlip(p=0.3),
+        #     K.RandomRotation(degrees=15.0, p=0.5),
 
-        # “Augraphy” 파이프라인: 간단 증강 + 정규화
-        augraphy_tf = torch.nn.Sequential(
-            K.RandomResizedCrop(size=(self.image_size, self.image_size),
-                                scale=(0.8, 1.0),
-                                ratio=(0.75, 1.3333),
-                                p=1.0),
-            K.RandomHorizontalFlip(p=0.5),
-            K.RandomVerticalFlip(p=0.3),
-            K.RandomRotation(degrees=15.0, p=0.5),
+        #     K.Normalize(mean=(0.485, 0.456, 0.406),
+        #                 std=(0.229, 0.224, 0.225)),
+        # ).to(self.device)
 
-            K.Normalize(mean=(0.485, 0.456, 0.406),
-                        std=(0.229, 0.224, 0.225)),
-        ).to(self.device)
-
-        self.train_tf = {
-            "Augraphy": augraphy_tf,
-            "NoAugraphy": no_augraphy_tf
-        }
+        # self.train_tf = {
+        #     "Augraphy": augraphy_tf,
+        #     "NoAugraphy": no_augraphy_tf
+        # }
         
     def __call__(self, image):
         """PIL.Image 또는 HWC NumPy → (C,H,W) Tensor → GPU 증강 → (C,H,W) Tensor 반환"""
         # 1) PIL → Tensor, 또는 NumPy(H×W×C uint8) → Tensor
-        if hasattr(image, 'convert'):
-            img_t = ToTensor()(image)  # C×H×W, float [0,1]
-        else:
-            img_np = image  # assume H×W×C uint8 or float[0,255]
-            img_t = torch.from_numpy(img_np).permute(2, 0, 1).float().div(255.0)
-
-        # 2) 배치 차원 & device 이동
-        img_t = img_t.unsqueeze(0).to(self.device, non_blocking=True)
+        # if hasattr(image, 'convert'):
+        #     img_t = ToTensor()(image)  # C×H×W, float [0,1]
+        # else:
+        #     img_np = image  # assume H×W×C uint8 or float[0,255]
+        #     img_t = torch.from_numpy(img_np).permute(2, 0, 1).float().div(255.0)
 
         # 3) 10% 확률로 “Augraphy” 사용
-        key = "Augraphy" if (random.random() < 0.1) else "NoAugraphy"
-        pipeline = self.train_tf[key]
+        # key = "Augraphy" if (random.random() < 0.1) else "NoAugraphy"
+        # pipeline = self.train_tf[key]
 
         # 4) GPU 증강 파이프라인 적용
-        out = pipeline(img_t)
+        out = self.train_tf(image=np.array(image))['image']
 
         # 5) 배치 제거 후 반환
-        return out.squeeze(0)
+        return out
