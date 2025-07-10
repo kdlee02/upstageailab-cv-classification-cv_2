@@ -16,6 +16,15 @@ from augraphy.utilities.meshgenerator import Noise
 from augraphy.utilities.slidingwindow import PatternMaker
 from numba import config, jit
 import random
+from albumentations import (
+    Compose, RandomResizedCrop, HorizontalFlip, VerticalFlip, Rotate,
+    ColorJitter, RandomBrightnessContrast, CLAHE,
+    GaussianBlur, CoarseDropout, Resize, Normalize
+)
+import torch
+import kornia.augmentation as K
+from augraphy import *
+from torchvision.transforms import ToTensor
 class SafeVoronoiTessellation(Augmentation):
     """
     파일 I/O 없이 Voronoi Tessellation을 수행하는 Safe 버전입니다.
@@ -38,7 +47,7 @@ class SafeVoronoiTessellation(Augmentation):
         self.num_cells_range = num_cells_range
         self.noise_type = noise_type
         self.background_value = background_value
-        config.DISABLE_JIT = bool(1 - numba_jit)
+        # numba JIT 설정은 기본값으로 유지
 
     @staticmethod
     @jit(nopython=True, cache=True, parallel=True)
@@ -145,6 +154,54 @@ class SafeVoronoiTessellation(Augmentation):
         if mask is not None or keypoints is not None or bounding_boxes is not None:
             return [result, mask, keypoints, bounding_boxes]
         return result
+paper_phase = [
+    OneOf([
+        DelaunayTessellation(
+            n_points_range=(500, 800),
+            n_horizontal_points_range=(500, 800),
+            n_vertical_points_range=(500, 800),
+            noise_type="random",
+            color_list="default",
+            color_list_alternate="default",
+        ),
+        PatternGenerator(
+            imgx=random.randint(256, 512),
+            imgy=random.randint(256, 512),
+            n_rotation_range=(10, 15),
+            color="random",
+            alpha_range=(0.35, 0.7), 
+        ),
+        SafeVoronoiTessellation(
+            mult_range=(80, 120),               
+            num_cells_range=(800, 1500),        
+            noise_type="random",
+            background_value=(180, 230),        
+        ),
+    ], p=1),
+    AugmentationSequence([
+        NoiseTexturize(
+            sigma_range=(20, 30),
+            turbulence_range=(8, 15),          
+        ),
+        BrightnessTexturize(
+            texturize_range=(0.75, 0.9),       
+            deviation=0.08,                    
+        ),
+    ]),
+]
+
+def get_augraphy_pipeline():
+    return AugraphyPipeline(paper_phase=paper_phase)
+
+class AugraphyAlbumentationsWrapper(A.ImageOnlyTransform):
+    def __init__(self, augraphy_pipeline, always_apply=False, p=1.0):
+        super().__init__(always_apply, p)
+        self.augraphy_pipeline = augraphy_pipeline
+
+    def apply(self, img, **params):
+        return self.augraphy_pipeline(img)
+
+
 
 
 
@@ -160,12 +217,12 @@ class ResizeWithPadding:
         w, h = image.size
         scale = min(self.size[0] / w, self.size[1] / h)
         new_w, new_h = int(w * scale), int(h * scale)
-        resized = TF.resize(image, (new_h, new_w))
+        resized = TF.resize(image, [new_h, new_w])
         pad_left = (self.size[0] - new_w) // 2
         pad_top = (self.size[1] - new_h) // 2
         pad_right = self.size[0] - new_w - pad_left
         pad_bottom = self.size[1] - new_h - pad_top
-        return TF.pad(resized, (pad_left, pad_top, pad_right, pad_bottom), fill=self.fill)
+        return TF.pad(resized, [pad_left, pad_top, pad_right, pad_bottom], fill=self.fill)
 
 class AugmentedTransform:
     """데이터 증강이 적용된 이미지 변환"""
@@ -173,40 +230,130 @@ class AugmentedTransform:
     def __init__(self, image_size: int = 224):
         self.image_size = image_size
 
-        self.transform = T.Compose([
-            ResizeWithPadding((self.image_size, self.image_size), fill=(255, 255, 255)),
-        ])
-        
-        # VoronoiTessellation을 직접 사용
-        self.pipeline = AugraphyPipeline([
-            SafeVoronoiTessellation(num_cells_range=(500, 800), p=0.0),
-        ])
-        
-        # 더 안전한 albumentations 변환들
-        self.albumentations_transform = A.Compose([
-            A.GaussianBlur(blur_limit=(3, 5), p=0.3),
-            A.Rotate(limit=360, p=0.5, border_mode=0, value=(255, 255, 255)),
-            A.HorizontalFlip(p=0.5),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        augraphy_pipeline = get_augraphy_pipeline()
+        self.train_tf =  Compose([
+                            Resize(self.image_size, self.image_size),
+                            HorizontalFlip(p=0.5),
+                            VerticalFlip(p=0.5),
+                            Rotate(limit=180, p=1),
+                            AugraphyAlbumentationsWrapper(augraphy_pipeline, p=1.0),
+                            Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                            ToTensorV2()])
+
+
+        train_tf =  Compose([
+            # 크롭/회전/플립
+            RandomResizedCrop(height=self.image_size, width=self.image_size, scale=(0.8, 1.0), p=1.0),
+            HorizontalFlip(p=0.5),
+            VerticalFlip(p=0.3),
+            Rotate(limit=15, p=0.5),
+
+            # 색상 변화 (RandAugment 대체 조합)
+            ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=0.5),
+            RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
+            # RandomContrast(limit=0.2, p=0.3),
+            CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.3),
+
+            # 블러 / 지우기
+            GaussianBlur(blur_limit=(3, 3), sigma_limit=(0.1, 2.0), p=0.3),
+            CoarseDropout(
+                max_holes=1,
+                max_height=int(self.image_size * 0.2),
+                max_width=int(self.image_size * 0.2),
+                fill_value=0,
+                p=0.25
+            ),
+
+            # 정규화 + Tensor
+            Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2()
         ])
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.train_tf = {"Augraphy" : 
+                         Compose([
+                            # 크롭/회전/플립
+                            RandomResizedCrop(height=self.image_size, width=self.image_size, scale=(0.8, 1.0), p=1.0),
+                            HorizontalFlip(p=0.5),
+                            VerticalFlip(p=0.3),
+                            Rotate(limit=15, p=0.5),
+                            
+                            # 정규화 + Tensor
+                            Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                            ToTensorV2()]), 
+                        "NoAugraphy": train_tf}
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        no_augraphy_tf = torch.nn.Sequential(
+            # 크롭/회전/플립
+            K.RandomResizedCrop(size=(self.image_size, self.image_size),
+                                scale=(0.8, 1.0),
+                                ratio=(0.75, 1.3333),
+                                p=1.0),
+            K.RandomHorizontalFlip(p=0.5),
+            K.RandomVerticalFlip(p=0.3),
+            K.RandomRotation(degrees=15.0, p=0.5),
+
+            # 색상 변화
+            K.ColorJitter(brightness=(0.8, 1.2),
+                          contrast=(0.8, 1.2),
+                          saturation=(0.8, 1.2),
+                          hue=(-0.2, 0.2),
+                          p=0.5),
+
+            # 블러
+            K.RandomGaussianBlur(kernel_size=(3, 3),
+                                 sigma=(0.1, 2.0),
+                                 p=0.3),
+
+            # 랜덤 지우기 (CoarseDropout 대체)
+            K.RandomErasing(scale=(0.02, 0.2),
+                            ratio=(0.3, 3.3),
+                            value=0,
+                            p=0.25),
+
+            # 정규화
+            K.Normalize(mean=(0.485, 0.456, 0.406),
+                        std=(0.229, 0.224, 0.225)),
+        ).to(self.device)
+
+        # “Augraphy” 파이프라인: 간단 증강 + 정규화
+        augraphy_tf = torch.nn.Sequential(
+            K.RandomResizedCrop(size=(self.image_size, self.image_size),
+                                scale=(0.8, 1.0),
+                                ratio=(0.75, 1.3333),
+                                p=1.0),
+            K.RandomHorizontalFlip(p=0.5),
+            K.RandomVerticalFlip(p=0.3),
+            K.RandomRotation(degrees=15.0, p=0.5),
+
+            K.Normalize(mean=(0.485, 0.456, 0.406),
+                        std=(0.229, 0.224, 0.225)),
+        ).to(self.device)
+
+        self.train_tf = {
+            "Augraphy": augraphy_tf,
+            "NoAugraphy": no_augraphy_tf
+        }
         
     def __call__(self, image):
-        """이미지 변환 적용"""
-        # 1. 초기 리사이즈 및 패딩 (입력: PIL, 출력: PIL)
-        # ResizeWithPadding이 먼저 적용되어 이미지 크기를 통일합니다.
-        resized_image = self.transform(image)
-        # 2. PIL 이미지를 NumPy 배열로 변환 (Augraphy/Albumentations 입력용)
-        image_np = np.array(resized_image)
-        
-        # 3. VoronoiTessellation 직접 적용 (입력: NumPy, 출력: NumPy)
-        # Voronoi Tessellation 등 문서 품질 저하 효과를 적용합니다.
+        """PIL.Image 또는 HWC NumPy → (C,H,W) Tensor → GPU 증강 → (C,H,W) Tensor 반환"""
+        # 1) PIL → Tensor, 또는 NumPy(H×W×C uint8) → Tensor
+        if hasattr(image, 'convert'):
+            img_t = ToTensor()(image)  # C×H×W, float [0,1]
+        else:
+            img_np = image  # assume H×W×C uint8 or float[0,255]
+            img_t = torch.from_numpy(img_np).permute(2, 0, 1).float().div(255.0)
 
-        aug_bgr = self.pipeline(image=image_np)
-        # aug_rgb = cv2.cvtColor(aug_bgr, cv2.COLOR_BGR2RGB)
-        # 4. Albumentations 파이프라인 적용 (입력: NumPy, 출력: 텐서)
-        # 기하학/색상 증강, 정규화, 텐서 변환을 최종적으로 적용합니다.
-        # Albumentations는 딕셔너리를 반환하므로 'image' 키로 값을 추출해야 합니다.
-        final_tensor = self.albumentations_transform(image=aug_bgr)['image']
-        
-        return final_tensor
+        # 2) 배치 차원 & device 이동
+        img_t = img_t.unsqueeze(0).to(self.device, non_blocking=True)
+
+        # 3) 10% 확률로 “Augraphy” 사용
+        key = "Augraphy" if (random.random() < 0.1) else "NoAugraphy"
+        pipeline = self.train_tf[key]
+
+        # 4) GPU 증강 파이프라인 적용
+        out = pipeline(img_t)
+
+        # 5) 배치 제거 후 반환
+        return out.squeeze(0)

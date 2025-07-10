@@ -8,7 +8,7 @@ defaults:
 
 # 기본 설정
 seed: 42
-num_classes: 17
+num_classes: 18
 
 # 저장 설정
 save:
@@ -17,10 +17,10 @@ save:
 
 # 학습 설정
 training:
-  batch_size: 16
-  max_epochs: 100
-  num_workers: 30
-  patience: 30
+  batch_size: 32
+  max_epochs: 70
+  num_workers: 4
+  patience: 10
 
 # 모델 설정
 model:
@@ -28,14 +28,14 @@ model:
   # model_name: "convnext_large"
   pretrained: true
   dropout_rate: 0.5
-  num_classes: 17
+  num_classes: 18
 
 # 데이터셋 설정
 dataset:
   name: "augmented_v2"
-  train_csv: "data/train_fixed.csv"
+  train_csv: "data/train_set_class18.csv"
   train_img_dir: "data/train"
-  val_csv: "data/train_fixed.csv"
+  val_csv: "data/train_set_class18.csv"
   val_img_dir: "data/train"
   # train_csv: "data/train_augmented2.csv"
   # train_img_dir: "data/train_augmented2"

@@ -60,15 +60,10 @@ def create_data_loaders(config):
         stratify=full_data['target'] if 'target' in full_data.columns else None
     )
 
-    oversample_labels = [3,4,7,14]
+    oversample_labels = [3,4,7,14,17]
     mask = train_data['target'].isin(oversample_labels)
-    # df_minority = train_data[mask]
-    # df_dup = pd.concat([df_minority] * 20, ignore_index=True)
-    # df_aug = pd.concat([train_data, df_dup], ignore_index=True)
-    # train_data = df_aug.sample(frac=1, random_state=config.get('seed', 42)).reset_index(drop=True)
- 
-    df_dup1 = pd.concat([train_data[mask]] * 4, ignore_index=True)
-    df_dup2 = pd.concat([train_data[~mask]] * 3, ignore_index=True)
+    df_dup1 = pd.concat([train_data[mask]] * 5, ignore_index=True)
+    df_dup2 = pd.concat([train_data[~mask]] * 4, ignore_index=True)
 
     df_aug = pd.concat([df_dup1, df_dup2], ignore_index=True)
     train_data = df_aug.sample(frac=1, random_state=config.get('seed', 42)).reset_index(drop=True)
@@ -115,22 +110,30 @@ def create_data_loaders(config):
         )
     else:
         raise ValueError(f"지원하지 않는 데이터셋: {dataset_name}")
-    
+    import torch.multiprocessing as mp
+
+    train_ctx = mp.get_context('spawn')
     # 데이터 로더 생성
     train_loader = DataLoader(
         train_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=True,
         num_workers=config['training'].get('num_workers', 4),
-        pin_memory=True
+        pin_memory=False,
+        multiprocessing_context=train_ctx,
+        persistent_workers=False,
+        drop_last=True
     )
-    
+    val_ctx = mp.get_context('spawn')
     val_loader = DataLoader(
         val_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=False,
         num_workers=config['training'].get('num_workers', 4),
-        pin_memory=True
+        pin_memory=False,
+        multiprocessing_context=val_ctx,
+        persistent_workers=False,
+        drop_last=True
     )
     
     return train_loader, val_loader 

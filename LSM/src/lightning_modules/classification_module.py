@@ -230,7 +230,10 @@ class ClassificationModule(pl.LightningModule):
             self.log(f'val_{class_name}_f1', self.val_class_f1.compute()[i], on_step=False, on_epoch=True)
         
         return loss
-    
+
+    def on_train_epoch_end(self):
+        torch.cuda.empty_cache()
+        
     def on_validation_epoch_end(self):
         """검증 에포크 종료 시 클래스별 평균 손실 계산"""
         # 클래스별 평균 손실 계산 및 로깅
@@ -240,6 +243,7 @@ class ClassificationModule(pl.LightningModule):
                 self.log(f'avg_{loss_key}', avg_loss, on_epoch=True)
                 # 리스트 초기화
                 self.class_losses[loss_key] = []
+        torch.cuda.empty_cache()
     
     def get_class_performance_summary(self, stage='val'):
         """클래스별 성능 요약 반환"""
