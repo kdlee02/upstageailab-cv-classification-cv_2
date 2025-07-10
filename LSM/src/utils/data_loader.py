@@ -112,27 +112,27 @@ def create_data_loaders(config):
         raise ValueError(f"지원하지 않는 데이터셋: {dataset_name}")
     import torch.multiprocessing as mp
 
-    train_ctx = mp.get_context('spawn')
+    # train_ctx = mp.get_context('spawn')
     # 데이터 로더 생성
     train_loader = DataLoader(
         train_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=True,
         num_workers=config['training'].get('num_workers', 4),
-        pin_memory=False,
-        multiprocessing_context=train_ctx,
-        persistent_workers=False,
+        pin_memory=True,
+        # multiprocessing_context=train_ctx,
+        # persistent_workers=False,
         drop_last=True
     )
-    val_ctx = mp.get_context('spawn')
+    # val_ctx = mp.get_context('spawn')
     val_loader = DataLoader(
         val_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=False,
         num_workers=config['training'].get('num_workers', 4),
-        pin_memory=False,
-        multiprocessing_context=val_ctx,
-        persistent_workers=False,
+        pin_memory=True,
+        # multiprocessing_context=val_ctx,
+        # persistent_workers=False,
         drop_last=True
     )
     
