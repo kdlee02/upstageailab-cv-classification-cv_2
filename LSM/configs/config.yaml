@@ -19,7 +19,7 @@ save:
 training:
   batch_size: 32
   max_epochs: 50
-  num_workers: 64
+  num_workers: 32
   patience: 10
 
 # 모델 설정
