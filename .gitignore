@@ -9,5 +9,4 @@ LSM/temp_val.csv
 LSM/wandb
 LSM/outputs
 LSM/augraphy_cache
-LSM/test*
 LSM/*.csv
