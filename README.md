@@ -4,7 +4,7 @@
 
 | ![박패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![이패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![최패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![오패캠](https://avatars.githubusercontent.com/u/156163982?v=4) |
 | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: |
-|            [이승민](https://github.com/UpstageAILab)             |            [최웅비](https://github.com/UpstageAILab)             |            [이경도](https://github.com/UpstageAILab)             |            [이상원](https://github.com/UpstageAILab)             |            [김재덕](https://github.com/UpstageAILab)             |
+|            [이승민](https://github.com/catinbox276)             |            [최웅비](https://github.com/Wchoi189)             |            [이경도](https://github.com/kdlee02)             |            [이상원](https://github.com/SuWuKIM)             |            [김재덕](https://github.com/ttcoaster)             |
 |                            팀장, model 실험                             |                            담당 오프라인 데이터 증강 실험                             |                            담당 온라인 데이터 증강 실험                           |                            담당 model 실험                             |                            담당 비지도 학습 실험                             |
 
 ## 0. Overview
@@ -101,14 +101,14 @@ JL/
 ## 3. Data descrption
 
 ### Dataset overview
-- ![](1.png)
-- ![](2.png)
+- ![](images/1.png)
+- ![](images/2.png)
 - 클래스별 이미지 수 불균형 존재
 - train/test 데이터 간 분포 차이 극심 (회전각 평균: train 1.9°, test 12.6°)
 - 테스트셋은 실제 환경 기반의 비스듬한 촬영, 그림자, 조명 간섭 등 존재
 
 ### EDA
-- ![](3.png)
+- ![](images/3.png)
 - 회전 각도, 밝기, 노이즈 등에서 정량/정성 차이 분석
 - Grad-CAM, Confusion Matrix, FAISS+CLIP 기반 군집 시각화 활용
 
@@ -131,9 +131,9 @@ JL/
 - Hard Negative Mining & OHEM 실험 (효과 제한적)
 - Test-Time Augmentation(TTA) 적용 시 오히려 성능 하락 (F1 0.9598 → 0.9553)
 - 학습 중 Confusion Matrix 시각화 / 학습 후 Grad-CAM 사용
-- ![](4.png)
-- ![](5.png)
-- ![](6.png)
+- ![](images/4.png)
+- ![](images/5.png)
+- ![](images/6.png)
 
 ## 5. Getting Started (JL Implementation)
 
