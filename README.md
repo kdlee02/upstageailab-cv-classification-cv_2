@@ -1,4 +1,5 @@
-# Title (Please modify the title)
+# Document Type Classification - Computer Vision Project
+
 ## Team
 
 | ![박패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![이패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![최패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![오패캠](https://avatars.githubusercontent.com/u/156163982?v=4) |
@@ -33,23 +34,69 @@
 - 2025.06.30 - 대회 시작
 - 2025.07.10 - 제출 마감
 
-## 2. Components
+## 2. Project Structure
 
-### Directory
+### JL Directory Structure
 
-e.g.
 ```
-├── team1
-│   └── ....
-├── team2
-│   └── ....
-├── team3
-│   └── ....
-├── team4
-│   └── ....
-├── team5
-│   └── ....
+JL/
+├── configs/                    # Hydra configuration files
+│   ├── callback/              # Callback configurations
+│   │   └── early_stopping.yaml
+│   ├── data/                  # Data module configurations
+│   │   ├── convnextArcFace.yaml
+│   │   ├── efficientnet.yaml
+│   │   └── swinTransformer.yaml
+│   ├── loss/                  # Loss function configurations
+│   │   ├── crossentropyloss.yaml
+│   │   └── focalloss.yaml
+│   ├── model/                 # Model configurations
+│   │   ├── convnextArcFace.yaml
+│   │   ├── efficientnet.yaml
+│   │   └── swinTransformer.yaml
+│   ├── optimizer/             # Optimizer configurations
+│   │   ├── adam.yaml
+│   │   ├── adamw.yaml
+│   │   └── sgd.yaml
+│   ├── scheduler/             # Learning rate scheduler configurations
+│   │   ├── cosineAnnealing_lr.yaml
+│   │   └── step_lr.yaml
+│   ├── trainer/               # Trainer configurations
+│   │   └── trainer.yaml
+│   └── config.yaml           # Main configuration file
+├── datasets/                  # Dataset files
+│   ├── meta.csv
+│   ├── sample_submission.csv
+│   └── train.csv
+├── script/                    # Main execution scripts
+│   ├── gradcam.py            # Grad-CAM visualization
+│   ├── test.py               # Model testing
+│   ├── train.py              # Model training
+│   └── tta.py                # Test-time augmentation
+├── src/                       # Source code modules
+│   ├── callbacks/            # Custom callbacks
+│   │   ├── averaging.py
+│   │   ├── confusionMatrix.py
+│   │   ├── evaluation.py
+│   │   ├── hardNegativeMining.py
+│   │   └── umap.py
+│   ├── datasets/             # Dataset modules
+│   ├── losses/               # Custom loss functions
+│   ├── models/               # Model implementations
+│   ├── trainer/              # Training modules
+│   └── utils/                # Utility functions
+├── .env.template             # Environment variables template
+├── EDA.ipynb                 # Exploratory Data Analysis notebook
+└── organize_images.py        # Image organization script
 ```
+
+### Key Components
+
+- **Hydra Configuration System**: Modular configuration management for experiments
+- **PyTorch Lightning**: Training framework with callbacks and logging
+- **TIMM Models**: Pre-trained vision models (EfficientNet, ConvNeXt, Swin Transformer)
+- **Custom Callbacks**: Confusion matrix, UMAP visualization, hard negative mining
+- **Flexible Loss Functions**: Cross-entropy, Focal loss with class balancing
 
 ## 3. Data descrption
 
@@ -90,6 +137,90 @@ e.g.
 
 ### Presentation
 - 발표자료: [PDF 첨부됨]
+
+## 5. Getting Started (JL Implementation)
+
+### Setup Environment
+
+1. **Clone the repository and navigate to JL directory**
+```bash
+cd JL
+```
+
+2. **Create environment file**
+```bash
+cp .env.template .env
+# Add your WANDB_API_KEY to .env file
+```
+
+3. **Install dependencies**
+```bash
+pip install torch torchvision pytorch-lightning
+pip install timm albumentations hydra-core wandb
+pip install scikit-learn matplotlib seaborn
+```
+
+### Configuration
+
+The project uses Hydra for configuration management. Key configuration files:
+
+- `configs/config.yaml`: Main configuration file
+- `configs/model/`: Model configurations (EfficientNet, ConvNeXt, Swin Transformer)
+- `configs/data/`: Data module configurations
+- `configs/optimizer/`: Optimizer settings (Adam, AdamW, SGD)
+- `configs/scheduler/`: Learning rate schedulers
+- `configs/loss/`: Loss function configurations
+
+### Training
+
+```bash
+# Basic training with default EfficientNet configuration
+python script/train.py
+
+# Train with specific model
+python script/train.py model=convnextArcFace
+
+# Train with custom experiment name
+python script/train.py experiment_name=my_experiment
+
+# Override specific parameters
+python script/train.py model.num_classes=17 optimizer.lr=0.001
+```
+
+### Testing and Inference
+
+```bash
+# Run inference on test set
+python script/test.py
+
+# Generate Grad-CAM visualizations
+python script/gradcam.py
+
+# Apply Test-Time Augmentation
+python script/tta.py
+```
+
+### Key Features
+
+- **Modular Configuration**: Easy experiment management with Hydra
+- **Multiple Model Support**: EfficientNet, ConvNeXt, Swin Transformer with ArcFace option
+- **Advanced Loss Functions**: Focal Loss with Class-Balanced weighting
+- **Rich Callbacks**: Confusion Matrix, UMAP visualization, Hard Negative Mining
+- **Comprehensive Logging**: WandB integration for experiment tracking
+- **Visualization Tools**: Grad-CAM, confusion matrices, UMAP embeddings
+
+### Dataset Structure
+
+Place your dataset in the following structure:
+```
+JL/datasets/
+├── train.csv          # Training labels
+├── meta.csv           # Metadata
+├── sample_submission.csv
+└── images/            # Image files (create this directory)
+    ├── train/
+    └── test/
+```
 
 ## etc
 
