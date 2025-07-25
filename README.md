@@ -5,7 +5,7 @@
 | ![박패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![이패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![최패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![오패캠](https://avatars.githubusercontent.com/u/156163982?v=4) |
 | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: |
 |            [이승민](https://github.com/catinbox276)             |            [최웅비](https://github.com/Wchoi189)             |            [이경도](https://github.com/kdlee02)             |            [이상원](https://github.com/SuWuKIM)             |            [김재덕](https://github.com/ttcoaster)             |
-|                            팀장, model 실험                             |                            담당 오프라인 데이터 증강 실험                             |                            담당 온라인 데이터 증강 실험                           |                            담당 model 실험                             |                            담당 비지도 학습 실험                             |
+|                            팀장, model 실험                             |                            오프라인 데이터 증강 실험                             |                            온라인 데이터 증강/모델 실험                           |                            model 실험                             |                            비지도 학습 실험                             |
 
 ## 0. Overview
 ### Environment
@@ -214,9 +214,8 @@ JL/datasets/
 ├── train.csv          # Training labels
 ├── meta.csv           # Metadata
 ├── sample_submission.csv
-└── images/            # Image files (create this directory)
-    ├── train/
-    └── test/
+└── train/            # train/test image files (create this directory and store images in png)
+└── test/             
 ```
 
 ## etc
