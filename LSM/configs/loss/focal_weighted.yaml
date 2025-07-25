@@ -1,4 +1,0 @@
-_target_: src.losses.focal.FocalLoss
-alpha: 1.0
-gamma: 2.0
-class_weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] 

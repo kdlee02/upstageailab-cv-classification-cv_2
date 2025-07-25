@@ -1,0 +1,3 @@
+monitor: "val_f1"
+mode: "max"
+patience: 5

@@ -1,3 +1,0 @@
-_target_: src.schedulers.step.StepScheduler
-step_size: 30
-gamma: 0.1 

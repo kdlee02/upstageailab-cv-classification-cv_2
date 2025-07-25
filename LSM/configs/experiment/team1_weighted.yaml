@@ -1,9 +1,0 @@
-name: "lsm_convnext_small_size_384_batch_32_focal_weighted_adamw_new_augmented_v2"
-description: "팀원1 실험 - convnext_small + cosine + 증강 데이터 + 클래스 가중치"
-tags: ["team1", "convnext_small", "cosine", "weighted"]
-model: convnext_small
-optimizer: cosine
-dataset: augmented_v2
-loss: focal_weighted
-transform: augmented_v2
-scheduler: exponential 

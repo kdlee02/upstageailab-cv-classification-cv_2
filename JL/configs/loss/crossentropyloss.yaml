@@ -1,0 +1,7 @@
+name: CrossEntropyLoss
+params:
+  weight: null
+  size_average: null
+  ignore_index: -100
+  reduce: null
+  reduction: 'mean'

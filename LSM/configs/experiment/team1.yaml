@@ -1,9 +1,0 @@
-name: "lsm_convnext_small_size_380_batch_32_os3-4-7-14x7_18classes"
-description: "팀원1 실험 - convnext_small + cosine + 증강 데이터"
-tags: ["team1", "convnext_small", "cosine"]
-model: convnext_small
-optimizer: cosine
-dataset: augmented_v2
-loss: focal
-transform: augmented_v2
-scheduler: exponential

@@ -1,12 +1,82 @@
-LSM/.venv
-LSM/checkpoint
-LSM/data/
-LSM/logs
-LSM/experiments
-LSM/.env
-LSM/temp_train.csv
-LSM/temp_val.csv
-LSM/wandb
-LSM/outputs
-LSM/augraphy_cache
-LSM/*.csv
+# JL specific
+JL/.venv
+JL/venv/
+JL/.env
+JL/data/
+JL/datasets/images/
+JL/datasets/test/
+JL/datasets/train/
+JL/checkpoints/
+JL/checkpoint/
+JL/logs/
+JL/outputs/
+JL/experiments/
+JL/wandb/
+JL/lightning_logs/
+JL/temp_*.csv
+JL/submission*.csv
+JL/results/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyTorch
+*.pth
+*.pt
+*.ckpt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+log/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/

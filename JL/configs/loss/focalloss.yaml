@@ -1,0 +1,5 @@
+loss_name: focalloss
+loss:
+  gamma: 2.0
+  reduction: mean
+  alpha: null

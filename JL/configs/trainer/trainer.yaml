@@ -1,0 +1,36 @@
+max_epochs: 100
+use_ema: true
+ema_update_epochs: 0
+
+use_swa: false
+swa_start_epoch: 2
+swa_lr: 0.0001
+use_mixup: true
+freeze_epochs: 0
+
+# Hard Negative Mining (your existing callback)
+hnm:
+  use_hnm: true
+  stop_epoch: 10
+
+# Online Hard Example Mining (OHEM)
+ohem:
+  use_ohem: true
+  ratio: 0.7          # Keep top 70% hardest examples per batch
+  min_samples: 16     # Minimum samples to keep per batch
+  start_epoch: 0      # Start OHEM from epoch 0
+  stop_epoch: 80      # Stop OHEM at epoch 80 (optional)
+
+use_augraphy: true
+
+error:
+  analysis:
+    save_dir: error_logs/analysis
+    top_k: 25
+  umap:
+    save_dir: error_logs/umap
+    every_n_epoch: 5
+  perclassloss:
+    save_dir: error_logs/perclassloss
+  confusion_matrix:
+    save_dir: error_logs/confusion_matrix

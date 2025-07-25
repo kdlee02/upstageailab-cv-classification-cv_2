@@ -1,3 +1,0 @@
-_target_: src.datasets.augmented.AugmentedDataset
-image_size: 224
-augmentation_strength: 0.5 

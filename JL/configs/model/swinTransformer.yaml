@@ -1,0 +1,7 @@
+_target_: timm.create_model
+name: swinTransformer
+model_name: "swinv2_base_window12to24_192to384_22kft1k"
+num_classes: 17
+pretrained: true
+arcFace: false
+freeze_epochs: 0

@@ -1,2 +1,0 @@
-_target_: src.schedulers.exponential.ExponentialScheduler
-gamma: 0.95 

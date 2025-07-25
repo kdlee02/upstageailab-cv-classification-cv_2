@@ -1,8 +1,0 @@
-name: "team2_experiment"
-description: "팀원2 실험 - EfficientNet + AdamW + 증강 데이터"
-tags: ["team2", "efficientnet", "adamw"]
-model: efficientnet
-optimizer: adamw
-dataset: augmented
-loss: focal
-transform: augmented 

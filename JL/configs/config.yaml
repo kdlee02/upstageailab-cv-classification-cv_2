@@ -1,0 +1,22 @@
+defaults:
+  - data: ${model}
+  - model: efficientnet
+  - optimizer: adamw
+  - trainer: trainer
+  - scheduler: cosineAnnealing_lr
+  - callback: early_stopping
+
+loss:
+  use_cb_loss: true
+  loss_type: "focal"
+  loss:
+    alpha: null
+
+test:
+  tta:
+    enabled: false
+    n_augmentations: 5
+    use_softmax: true
+
+#experiment_name: ${data.name}_${model.name}
+experiment_name: efficientnet

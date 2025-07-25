@@ -1,0 +1,5 @@
+# StepLR scheduler configuration
+name: StepLR
+params:
+  step_size: 10
+  gamma: 0.1

@@ -1,0 +1,7 @@
+_target_: timm.create_model
+name: efficientnet
+model_name: "tf_efficientnet_b3_ns"
+num_classes: 17
+pretrained: true
+arcFace: false
+freeze_epochs: 0

@@ -1,8 +1,0 @@
-name: "team5_experiment"
-description: "팀원5 실험 - EfficientNet + Adam + 기본 데이터"
-tags: ["team5", "efficientnet", "adam"]
-model: efficientnet
-optimizer: adam
-dataset: basic
-loss: cross_entropy
-transform: basic 

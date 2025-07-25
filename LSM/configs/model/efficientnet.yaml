@@ -1,4 +1,0 @@
-_target_: src.models.efficientnet.EfficientNetModel
-model_name: "efficientnet-b0"
-num_classes: 17
-dropout_rate: 0.3 
