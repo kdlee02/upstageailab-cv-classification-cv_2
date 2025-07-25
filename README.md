@@ -101,14 +101,14 @@ JL/
 ## 3. Data descrption
 
 ### Dataset overview
-- ![](./asset/images/1.png)
-- ![](./asset/images/2.png)
+- ![](../1.png)
+- ![](../2.png)
 - 클래스별 이미지 수 불균형 존재
 - train/test 데이터 간 분포 차이 극심 (회전각 평균: train 1.9°, test 12.6°)
 - 테스트셋은 실제 환경 기반의 비스듬한 촬영, 그림자, 조명 간섭 등 존재
 
 ### EDA
-- ![](./asset/images/3.png)
+- ![](../3.png)
 - 회전 각도, 밝기, 노이즈 등에서 정량/정성 차이 분석
 - Grad-CAM, Confusion Matrix, FAISS+CLIP 기반 군집 시각화 활용
 
@@ -131,12 +131,9 @@ JL/
 - Hard Negative Mining & OHEM 실험 (효과 제한적)
 - Test-Time Augmentation(TTA) 적용 시 오히려 성능 하락 (F1 0.9598 → 0.9553)
 - 학습 중 Confusion Matrix 시각화 / 학습 후 Grad-CAM 사용
-- ![](./asset/images/4.png)
-- ![](./asset/images/5.png)
-- ![](./asset/images/6.png)
-
-### Presentation
-- 발표자료: [PDF 첨부됨]
+- ![](../4.png)
+- ![](../5.png)
+- ![](../6.png)
 
 ## 5. Getting Started (JL Implementation)
 
